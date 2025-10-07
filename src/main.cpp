@@ -8,15 +8,17 @@ class Game {
 
    private:
     void processEvents();
+    void handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
     void update();
     void render();
 
-    bool updated = true;
-    float x = 100.f;
-    float y = 100.f;
-
     sf::RenderWindow mWindow;
     sf::CircleShape mPlayer;
+
+    bool mIsMovingUp = false;
+    bool mIsMovingDown = false;
+    bool mIsMovingLeft = false;
+    bool mIsMovingRight = false;
 };
 
 Game::Game()
@@ -28,35 +30,48 @@ Game::Game()
 
 void Game::processEvents() {
     while (const std::optional e = mWindow.pollEvent()) {
-        if (e->is<sf::Event::Closed>()) mWindow.close();
         if (e->is<sf::Event::KeyPressed>()) {
-            switch (e->getIf<sf::Event::KeyPressed>()->code) {
-                case sf::Keyboard::Key::A:
-                    x -= 10;
-                    break;
-                case sf::Keyboard::Key::D:
-                    x += 10;
-                    break;
-                case sf::Keyboard::Key::W:
-                    y -= 10;
-                    break;
-                case sf::Keyboard::Key::S:
-                    y += 10;
-                    break;
-                default:
-                    break;
-            }
-        }
-        updated = true;
+            handlePlayerInput(e->getIf<sf::Event::KeyPressed>()->code, true);
+        } else if (e->is<sf::Event::KeyReleased>()) {
+            handlePlayerInput(e->getIf<sf::Event::KeyReleased>()->code, false);
+        } else if (e->is<sf::Event::Closed>())
+            mWindow.close();
     }
 }
 
-void Game::update() { mPlayer.setPosition({x, y}); }
+void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed) {
+    switch (key) {
+        case sf::Keyboard::Key::W:
+            mIsMovingUp = isPressed;
+            break;
+        case sf::Keyboard::Key::S:
+            mIsMovingDown = isPressed;
+            break;
+        case sf::Keyboard::Key::A:
+            mIsMovingLeft = isPressed;
+            break;
+        case sf::Keyboard::Key::D:
+            mIsMovingRight = isPressed;
+            break;
+        default:
+            break;
+    }
+}
+
+void Game::update() {
+    sf::Vector2f movement(0.f, 0.f);
+    if (mIsMovingUp) movement.y -= .1f;
+    if (mIsMovingDown) movement.y += .1f;
+    if (mIsMovingLeft) movement.x -= .1f;
+    if (mIsMovingRight) movement.x += .1f;
+
+    mPlayer.move(movement);
+}
 
 void Game::render() {
-    if (!updated) return;
-    updated = false;
-    printf("R\n");
+    // if (!updated) return;
+    // updated = false;
+    // printf("R\n");
 
     mWindow.clear();
     mWindow.draw(mPlayer);
