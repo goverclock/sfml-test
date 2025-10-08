@@ -6,10 +6,13 @@ class Game {
 
     void run();
 
+    const sf::Time TimePerFrame = sf::seconds(1.f / 60.f);
+    const float PlayerSpeed = 80.f;
+
    private:
     void processEvents();
     void handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
-    void update();
+    void update(sf::Time deltaTime);
     void render();
 
     sf::RenderWindow mWindow;
@@ -58,30 +61,33 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed) {
     }
 }
 
-void Game::update() {
+void Game::update(sf::Time deltaTime) {
     sf::Vector2f movement(0.f, 0.f);
-    if (mIsMovingUp) movement.y -= .1f;
-    if (mIsMovingDown) movement.y += .1f;
-    if (mIsMovingLeft) movement.x -= .1f;
-    if (mIsMovingRight) movement.x += .1f;
+    if (mIsMovingUp) movement.y -= PlayerSpeed;
+    if (mIsMovingDown) movement.y += PlayerSpeed;
+    if (mIsMovingLeft) movement.x -= PlayerSpeed;
+    if (mIsMovingRight) movement.x += PlayerSpeed;
 
-    mPlayer.move(movement);
+    mPlayer.move(movement * deltaTime.asSeconds());
 }
 
 void Game::render() {
-    // if (!updated) return;
-    // updated = false;
-    // printf("R\n");
-
     mWindow.clear();
     mWindow.draw(mPlayer);
     mWindow.display();
 }
 
 void Game::run() {
+    sf::Clock clock;
+    sf::Time timeSinceLastUpdate = sf::Time::Zero;
     while (mWindow.isOpen()) {
         processEvents();
-        update();
+        timeSinceLastUpdate += clock.restart();
+        while (timeSinceLastUpdate > TimePerFrame) {
+            timeSinceLastUpdate -= TimePerFrame;
+            processEvents();
+            update(TimePerFrame);
+        }
         render();
     }
 }
