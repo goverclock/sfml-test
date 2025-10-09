@@ -16,7 +16,8 @@ class Game {
     void render();
 
     sf::RenderWindow mWindow;
-    sf::CircleShape mPlayer;
+    sf::Texture mTexture;
+    sf::Sprite mPlayer;
 
     bool mIsMovingUp = false;
     bool mIsMovingDown = false;
@@ -25,10 +26,15 @@ class Game {
 };
 
 Game::Game()
-    : mWindow(sf::VideoMode({640u, 480u}), "SFML Application"), mPlayer() {
-    mPlayer.setRadius(40.f);
-    mPlayer.setPosition({100.f, 100.f});
-    mPlayer.setFillColor(sf::Color::Blue);
+    : mWindow(sf::VideoMode({640u, 480u}), "SFML Application"),
+      mTexture("/Users/goverclock/code/sfml-test/banio.jpg"),
+      mPlayer(mTexture) {
+    // if (!mTexture.loadFromFile("/Users/goverclock/code/sfml-test/banio.jpg"))
+    // {
+    //     printf("fail to load banio\n");
+    // }
+    // printf("ok to load banio\n");
+    // mPlayer = sf::Sprite(mTexture);
 }
 
 void Game::processEvents() {
@@ -72,6 +78,10 @@ void Game::update(sf::Time deltaTime) {
 }
 
 void Game::render() {
+    sf::Texture t("/Users/goverclock/code/sfml-test/banio.jpg");
+    sf::Sprite s(t);
+    // mPlayer = s;
+
     mWindow.clear();
     mWindow.draw(mPlayer);
     mWindow.display();
