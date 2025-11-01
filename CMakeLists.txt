@@ -16,6 +16,9 @@ add_executable(main
     src/main.cpp
     src/game.cpp
     src/textures.cpp
+    src/resource_holder.cpp
+    src/entity.cpp
+    src/scene.cpp
 )
 target_compile_features(main PRIVATE cxx_std_17)
 target_link_libraries(main PRIVATE SFML::Graphics)
