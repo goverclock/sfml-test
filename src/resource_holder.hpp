@@ -1,5 +1,8 @@
 #include <string>
+#include <memory>
 #include <map>
+#include <SFML/Graphics.hpp>
+#include "textures.hpp"
 
 template <typename Resource, typename Identifier>
 class ResourceHolder {
@@ -16,3 +19,7 @@ class ResourceHolder {
    private:
     std::map<Identifier, std::unique_ptr<Resource>> mResourceMap;
 };
+
+typedef ResourceHolder<sf::Texture, Textures::ID> TextureHolder;
+
+#include "resource_holder.inl"

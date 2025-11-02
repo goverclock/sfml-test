@@ -1,8 +1,8 @@
 #include "game.hpp"
 
 Game::Game()
-    : mWindow(sf::VideoMode({640u, 480u}), "SFML Application"),
-      mTexture("/Users/goverclock/code/sfml-test/banio.jpg"),
+    : mWindow(sf::VideoMode({1920u, 1080u}), "SFML Application"),
+      mTexture("assets/banio.jpg"),
       mPlayer(mTexture) {}
 
 void Game::processEvents() {
@@ -46,9 +46,8 @@ void Game::update(sf::Time deltaTime) {
 }
 
 void Game::render() {
-    sf::Texture t("/Users/goverclock/code/sfml-test/banio.jpg");
+    sf::Texture t("assets/banio.jpg");
     sf::Sprite s(t);
-    // mPlayer = s;
 
     mWindow.clear();
     mWindow.draw(mPlayer);

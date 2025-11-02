@@ -1,6 +1,7 @@
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include "scene.hpp"
+#include "resource_holder.hpp"
 
 class Entity : public SceneNode {
    public:
@@ -20,12 +21,13 @@ class Aircraft : public Entity {
     };
 
    public:
-    explicit Aircraft(Type type);
+    explicit Aircraft(Type type, const TextureHolder& textures);
     Aircraft() = delete;
     virtual void drawCurrent(sf::RenderTarget& target,
                              sf::RenderStates states) const override;
 
    private:
+    static Textures::ID toTextureID(Aircraft::Type type);
     Type mType;
     sf::Sprite mSprite;
 };

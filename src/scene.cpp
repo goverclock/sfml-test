@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <cassert>
 
+SceneNode::SceneNode() : mChildren(), mParent(nullptr) {}
+
 void SceneNode::attachChild(SceneNodeSP child) {
     child->mParent = this;
     mChildren.push_back(std::move(child));
