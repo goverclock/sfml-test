@@ -1,19 +1,6 @@
 #pragma once
-#include <vector>
+#include "mine_cell.hpp"
 #include <memory>
-
-enum class CellStatus {
-    Covered,
-    Revealed,
-    Marked,
-};
-
-struct MineCell {
-    CellStatus mCellStatus;
-    unsigned mMineNumber;
-};
-
-typedef std::vector<std::vector<MineCell>> MineField;
 
 enum class GameStatus {
     NotStarted,  // aka title screen
@@ -29,6 +16,7 @@ class LocalStatus {
     void start_game(size_t row, size_t col);
 
     const MineCell& get_cell(size_t row, size_t col);
+    const MineField& get_field();
     size_t field_rows();
     size_t field_cols();
     void reveal(size_t row, size_t col);
@@ -39,5 +27,5 @@ class LocalStatus {
     size_t mRows;
     size_t mCols;
     GameStatus mGameStatus;
-    std::unique_ptr<MineField> mMineField;
+    MineField mMineField;
 };
