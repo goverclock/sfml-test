@@ -9,7 +9,8 @@ enum class MineCellStatus {
 
 struct MineCell {
     MineCellStatus mCellStatus;
-    unsigned mMineNumber;
+    bool mIsBomb;
+    unsigned mBombCount;
 };
 
 typedef std::vector<std::vector<MineCell>> MineField;
