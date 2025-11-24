@@ -1,26 +1,22 @@
-#include "../include/local_status.hpp"
 #include <cassert>
-#include <queue>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <queue>
+
+#include "../include/local_status.hpp"
 
 LocalStatus::LocalStatus()
     : mGameStatus(GameStatus::NotStarted), mMineField() {}
 
 void LocalStatus::start_game(size_t row, size_t col) {
+    mGameStatus = GameStatus::Running;
+
+    // init field
     mRows = row;
     mCols = col;
     mMineField.clear();
     mMineField.resize(row);
-    // for (size_t r = 0; r < row; r++) {
-    //     mMineField[r].resize(col);
-    //     for (size_t c = 0; c < col; c++)  // TEST:
-    //         mMineField[r][c] = MineCell{
-    //             .mCellStatus = ((r + c) % 2) ? MineCellStatus::Covered
-    //                                          : MineCellStatus::Revealed,
-    //             .mBombCount = static_cast<unsigned>(r + c) % 10};
-    // }
     for (size_t r = 0; r < row; r++) {
         mMineField[r].resize(col);
         for (size_t c = 0; c < col; c++)
@@ -33,7 +29,7 @@ void LocalStatus::start_game(size_t row, size_t col) {
 
     std::srand(std::time({}));
     std::vector<std::pair<size_t, size_t>> bombs;
-    // TEST: duplicate is possible
+    // TODO: duplicate is possible
     while (bombs.size() < 10)
         bombs.push_back(
             {(size_t)(std::rand() % row), (size_t)(std::rand() % col)});
@@ -65,10 +61,13 @@ const MineCell& LocalStatus::get_cell(size_t row, size_t col) {
 
 const MineField& LocalStatus::get_field() { return mMineField; }
 
+const GameStatus& LocalStatus::game_status() { return mGameStatus; }
+
 size_t LocalStatus::field_rows() { return mRows; }
+
 size_t LocalStatus::field_cols() { return mCols; }
 
-void LocalStatus::reveal(size_t row, size_t col) {
+void LocalStatus::reveal_cell(size_t row, size_t col) {
     assert(row < mRows && col < mCols);
     if (mMineField[row][col].mCellStatus == MineCellStatus::Revealed) return;
     const int dr[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
@@ -92,7 +91,7 @@ void LocalStatus::reveal(size_t row, size_t col) {
     }
 }
 
-void LocalStatus::mark(size_t row, size_t col) {
+void LocalStatus::mark_cell(size_t row, size_t col) {
     assert(row < mRows && col < mCols);
     auto& cell = mMineField[row][col];
     if (cell.mCellStatus != MineCellStatus::Covered) return;
