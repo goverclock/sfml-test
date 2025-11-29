@@ -5,7 +5,6 @@
 enum class GameStatus {
     NotStarted,  // aka title screen
     Running,
-    SummaryScreen,
 };
 
 class LocalStatus {

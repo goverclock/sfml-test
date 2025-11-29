@@ -13,4 +13,4 @@ struct MineCell {
     unsigned mBombCount;
 };
 
-typedef std::vector<std::vector<MineCell>> MineField;
+using MineField = std::vector<std::vector<MineCell>>;

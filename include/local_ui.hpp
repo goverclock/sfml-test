@@ -17,17 +17,46 @@ struct Renderable {
     virtual void handle_click_event(sf::RenderWindow& w, sf::Event e) = 0;
 };
 
-class GameRunningUI : public Renderable {
+class MineFieldUI : public Renderable {
    public:
-    GameRunningUI(LocalStatus& ls);
+    MineFieldUI(LocalStatus& ls);
+    virtual ~MineFieldUI();
+    void render(sf::RenderWindow& w) override;
+    void handle_click_event(sf::RenderWindow& w, sf::Event e) override;
+
+   private:
     std::optional<sf::Vector2i> get_rol_col_by_pos(const sf::Vector2i pos);
+    LocalStatus& mLocalStatus;
+    std::vector<std::vector<MineCellUI>> mFieldUI;
+    sf::Font mFont;
+};
+
+class GameTitleUI : public Renderable {
+   public:
+    GameTitleUI(LocalStatus& ls);
     void render(sf::RenderWindow& w) override;
     void handle_click_event(sf::RenderWindow& w, sf::Event e) override;
 
    private:
     LocalStatus& mLocalStatus;
-    std::vector<std::vector<MineCellUI>> mFieldUI;
+    // TODO: refactor into a ResourceManager to store mFont for all class
     sf::Font mFont;
+    // TODO: create a button class, which is also Renderable
+    sf::RectangleShape mStartButton10_10;
+    sf::Text mText10_10;
+    sf::RectangleShape mStartButton10_15;
+    sf::Text mText10_15;
+};
+
+class GameRunningUI : public Renderable {
+   public:
+    GameRunningUI(LocalStatus& ls);
+    void render(sf::RenderWindow& w) override;
+    void handle_click_event(sf::RenderWindow& w, sf::Event e) override;
+
+   private:
+    LocalStatus& mLocalStatus;
+    MineFieldUI mMineFieldUI;
 };
 
 class LocalUI : Renderable {
@@ -39,5 +68,5 @@ class LocalUI : Renderable {
    private:
     LocalStatus& mLocalStatus;
     GameStatus mUIStatus;
-    std::unique_ptr<Renderable> mStatusUI;
+    std::unique_ptr<Renderable> mStatusUISP;
 };

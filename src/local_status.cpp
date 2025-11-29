@@ -70,6 +70,12 @@ size_t LocalStatus::field_cols() { return mCols; }
 void LocalStatus::reveal_cell(size_t row, size_t col) {
     assert(row < mRows && col < mCols);
     if (mMineField[row][col].mCellStatus == MineCellStatus::Revealed) return;
+    if (mMineField[row][col].mIsBomb) {
+        mMineField[row][col].mCellStatus = MineCellStatus::Revealed;
+        // TODO: mark as failed
+        return;
+    }
+
     const int dr[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
     const int dc[8] = {-1, 0, 1, -1, 1, -1, 0, 1};
     std::queue<std::pair<int, int>> q;

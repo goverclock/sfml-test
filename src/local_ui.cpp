@@ -2,7 +2,57 @@
 
 #include "../include/local_ui.hpp"
 
-GameRunningUI::GameRunningUI(LocalStatus& ls)
+GameTitleUI::GameTitleUI(LocalStatus& ls)
+    : mLocalStatus(ls),
+      mFont("resource/JetBrainsMono-Regular.ttf"),
+      mText10_10(mFont, "Start\n10x10"),
+      mText10_15(mFont, "Start\n10x15") {
+    mStartButton10_10.setSize({300.f, 140.f});
+    mStartButton10_15.setSize({300.f, 140.f});
+    mStartButton10_10.setFillColor(sf::Color::White);
+    mStartButton10_15.setFillColor(sf::Color::White);
+
+    mText10_10.setFillColor(sf::Color::Black);
+    mText10_15.setFillColor(sf::Color::Black);
+    mText10_10.setCharacterSize(50);
+    mText10_15.setCharacterSize(50);
+}
+
+void GameTitleUI::render(sf::RenderWindow& w) {
+    sf::Vector2u window_size = w.getSize();
+    float x = window_size.x / 2 - mStartButton10_10.getSize().x / 2;
+    float y = window_size.y / 2;
+    mStartButton10_10.setPosition({x, y});
+    mStartButton10_15.setPosition({x, y + 200.f});
+    w.draw(mStartButton10_10);
+    w.draw(mStartButton10_15);
+
+    mText10_10.setPosition({x, y});
+    mText10_15.setPosition({x, y + 200.f});
+    w.draw(mText10_10);
+    w.draw(mText10_15);
+}
+
+void GameTitleUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
+    const sf::Event::MouseButtonPressed* mouse_button_pressed =
+        e.getIf<sf::Event::MouseButtonPressed>();
+    assert(mouse_button_pressed);
+    const auto mouse_pos = sf::Mouse::getPosition(w);
+    std::cout << "Title: mouse at: " << mouse_pos.x << " " << mouse_pos.y
+              << std::endl;
+    if (mStartButton10_10.getGlobalBounds().contains(
+            {(float)mouse_pos.x, (float)mouse_pos.y})) {
+        std::cout << "Title: clicked on Start 10x10" << std::endl;
+        mLocalStatus.start_game(10, 10);
+    }
+    if (mStartButton10_15.getGlobalBounds().contains(
+            {(float)mouse_pos.x, (float)mouse_pos.y})) {
+        std::cout << "Title: clicked on Start 10x15" << std::endl;
+        mLocalStatus.start_game(10, 15);
+    }
+}
+
+MineFieldUI::MineFieldUI(LocalStatus& ls)
     : mLocalStatus(ls), mFont("resource/JetBrainsMono-Regular.ttf") {
     size_t row = mLocalStatus.field_rows();
     size_t col = mLocalStatus.field_cols();
@@ -15,19 +65,10 @@ GameRunningUI::GameRunningUI(LocalStatus& ls)
         }
 }
 
-std::optional<sf::Vector2i> GameRunningUI::get_rol_col_by_pos(
-    const sf::Vector2i pos) {
-    for (size_t r = 0; r < mFieldUI.size(); r++)
-        for (size_t c = 0; c < mFieldUI[0].size(); c++) {
-            if (mFieldUI[r][c].rect.getGlobalBounds().contains(
-                    {(float)pos.x, (float)pos.y})) {
-                return {{(int)r, (int)c}};
-            }
-        }
-    return {};
-}
+// FUCK C++ compiler
+MineFieldUI::~MineFieldUI() {};
 
-void GameRunningUI::render(sf::RenderWindow& window) {
+void MineFieldUI::render(sf::RenderWindow& window) {
     const auto mine_field = mLocalStatus.get_field();
     assert(mine_field.size() == mFieldUI.size());
     assert(mine_field[0].size() == mFieldUI[0].size());
@@ -65,7 +106,7 @@ void GameRunningUI::render(sf::RenderWindow& window) {
         }
 }
 
-void GameRunningUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
+void MineFieldUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
     const sf::Event::MouseButtonPressed* mouse_button_pressed =
         e.getIf<sf::Event::MouseButtonPressed>();
     assert(mouse_button_pressed);
@@ -84,11 +125,38 @@ void GameRunningUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
         mLocalStatus.mark_cell(rol_col->x, rol_col->y);
 }
 
+std::optional<sf::Vector2i> MineFieldUI::get_rol_col_by_pos(
+    const sf::Vector2i pos) {
+    for (size_t r = 0; r < mFieldUI.size(); r++)
+        for (size_t c = 0; c < mFieldUI[0].size(); c++) {
+            if (mFieldUI[r][c].rect.getGlobalBounds().contains(
+                    {(float)pos.x, (float)pos.y})) {
+                return {{(int)r, (int)c}};
+            }
+        }
+    return {};
+}
+
+GameRunningUI::GameRunningUI(LocalStatus& ls)
+    : mLocalStatus(ls), mMineFieldUI(ls) {}
+
+void GameRunningUI::render(sf::RenderWindow& window) {
+    mMineFieldUI.render(window);
+}
+
+void GameRunningUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
+    mMineFieldUI.handle_click_event(w, e);
+}
+
 void LocalUI::render(sf::RenderWindow& w) {
-    if (!mStatusUI || mUIStatus != mLocalStatus.game_status()) {
+    std::unique_ptr<MineFieldUI> x;
+    if (!mStatusUISP || mUIStatus != mLocalStatus.game_status()) {
         switch (mLocalStatus.game_status()) {
             case GameStatus::Running:
-                mStatusUI.reset(new GameRunningUI(mLocalStatus));
+                mStatusUISP.reset(new GameRunningUI(mLocalStatus));
+                break;
+            case GameStatus::NotStarted:
+                mStatusUISP.reset(new GameTitleUI(mLocalStatus));
                 break;
             default:
                 assert(false && "not implemented");
@@ -97,17 +165,10 @@ void LocalUI::render(sf::RenderWindow& w) {
         mUIStatus = mLocalStatus.game_status();
     }
 
-    switch (mUIStatus) {
-        case GameStatus::Running:
-            mStatusUI->render(w);
-            break;
-        default:
-            assert(false && "not implemented");
-            break;
-    }
+    mStatusUISP->render(w);
 }
 
 void LocalUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
-    assert(mStatusUI);
-    mStatusUI->handle_click_event(w, e);
+    assert(mStatusUISP);
+    mStatusUISP->handle_click_event(w, e);
 }

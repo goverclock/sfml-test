@@ -10,7 +10,7 @@ int main() {
     sf::RenderWindow w(sf::VideoMode({1920, 1080}), "FUCK BOOK");
     LocalStatus local_status;
     LocalUI local_ui(local_status);
-    local_status.start_game(10, 10);
+    // local_status.start_game(10, 10);
 
     const auto on_mouse_button_pressed =
         [&](const sf::Event::MouseButtonPressed& mouse_button_pressed) {
@@ -24,7 +24,6 @@ int main() {
     while (w.isOpen()) {
         w.handleEvents([&](const sf::Event::Closed) { w.close(); },
                        on_key_pressed, on_mouse_button_pressed);
-
         w.clear(sf::Color(55, 55, 55, 0));
         local_ui.render(w);
         w.display();
