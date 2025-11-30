@@ -1,16 +1,12 @@
-#include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
 #include <iostream>
 #include <vector>
 
-#include "../include/local_status.hpp"
-#include "../include/local_ui.hpp"
+#include "msui/local_ui.hpp"
 
 int main() {
     sf::RenderWindow w(sf::VideoMode({1920, 1080}), "FUCK BOOK");
     LocalStatus local_status;
     LocalUI local_ui(local_status);
-    // local_status.start_game(10, 10);
 
     const auto on_mouse_button_pressed =
         [&](const sf::Event::MouseButtonPressed& mouse_button_pressed) {

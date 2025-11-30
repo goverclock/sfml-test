@@ -4,7 +4,7 @@
 #include <iostream>
 #include <queue>
 
-#include "../include/local_status.hpp"
+#include "mscore/local_status.hpp"
 
 LocalStatus::LocalStatus()
     : mGameStatus(GameStatus::NotStarted), mMineField() {}
@@ -22,8 +22,8 @@ void LocalStatus::start_game(size_t row, size_t col) {
         for (size_t c = 0; c < col; c++)
             mMineField[r][c] = MineCell{
                 .mCellStatus = MineCellStatus::Covered,
-                .mIsBomb = false,
                 .mBombCount = 0,
+                .mIsBomb = false,
             };
     }
 
@@ -95,11 +95,4 @@ void LocalStatus::reveal_cell(size_t row, size_t col) {
                     q.push({nr, nc});
             }
     }
-}
-
-void LocalStatus::mark_cell(size_t row, size_t col) {
-    assert(row < mRows && col < mCols);
-    auto& cell = mMineField[row][col];
-    if (cell.mCellStatus != MineCellStatus::Covered) return;
-    cell.mCellStatus = MineCellStatus::Marked;
 }

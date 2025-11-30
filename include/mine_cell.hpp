@@ -4,13 +4,12 @@
 enum class MineCellStatus {
     Covered,
     Revealed,
-    Marked,
 };
 
 struct MineCell {
     MineCellStatus mCellStatus;
-    bool mIsBomb;
     unsigned mBombCount;
+    bool mIsBomb;
 };
 
 using MineField = std::vector<std::vector<MineCell>>;

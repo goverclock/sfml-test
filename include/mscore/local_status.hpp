@@ -1,5 +1,5 @@
 #pragma once
-#include "mine_cell.hpp"
+#include "../mine_cell.hpp"
 #include <memory>
 
 enum class GameStatus {
@@ -19,8 +19,6 @@ class LocalStatus {
     size_t field_rows();
     size_t field_cols();
     void reveal_cell(size_t row, size_t col);
-    void mark_cell(size_t row, size_t col);
-    void unmark_cell(size_t row, size_t col);
 
    private:
     size_t mRows;

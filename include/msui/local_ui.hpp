@@ -2,14 +2,15 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 
-#include "../include/mine_cell.hpp"
-#include "local_status.hpp"
+#include "mine_cell.hpp"
+#include "mscore/local_status.hpp"
 
 struct MineCellUI {
     MineCellUI() : rect({cell_size, cell_size}), mine_number_text({}) {};
     constexpr static float cell_size = 90.f;
     sf::RectangleShape rect;
     std::optional<sf::Text> mine_number_text;
+    bool is_marked = false;
 };
 
 struct Renderable {
@@ -26,6 +27,8 @@ class MineFieldUI : public Renderable {
 
    private:
     std::optional<sf::Vector2i> get_rol_col_by_pos(const sf::Vector2i pos);
+    void mark_cell(size_t row, size_t col);
+    void unmark_cell(size_t row, size_t col);
     LocalStatus& mLocalStatus;
     std::vector<std::vector<MineCellUI>> mFieldUI;
     sf::Font mFont;

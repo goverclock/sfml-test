@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../include/local_ui.hpp"
+#include "msui/local_ui.hpp"
 
 GameTitleUI::GameTitleUI(LocalStatus& ls)
     : mLocalStatus(ls),
@@ -78,7 +78,10 @@ void MineFieldUI::render(sf::RenderWindow& window) {
             MineCellUI& cell_ui = mFieldUI[r][c];
             switch (cell_status.mCellStatus) {
                 case MineCellStatus::Covered:
-                    cell_ui.rect.setFillColor(sf::Color::Black);
+                    if (cell_ui.is_marked)
+                        cell_ui.rect.setFillColor(sf::Color::Yellow);
+                    else
+                        cell_ui.rect.setFillColor(sf::Color::Black);
                     window.draw(cell_ui.rect);
                     break;
                 case MineCellStatus::Revealed:
@@ -98,9 +101,8 @@ void MineFieldUI::render(sf::RenderWindow& window) {
                     if (cell_ui.mine_number_text)
                         window.draw(*cell_ui.mine_number_text);
                     break;
-                case MineCellStatus::Marked:
-                    cell_ui.rect.setFillColor(sf::Color::Yellow);
-                    window.draw(cell_ui.rect);
+                default:
+                    assert(false && "unknown cell status");
                     break;
             }
         }
@@ -122,7 +124,10 @@ void MineFieldUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
     if (mouse_button_pressed->button == sf::Mouse::Button::Left)
         mLocalStatus.reveal_cell(rol_col->x, rol_col->y);
     if (mouse_button_pressed->button == sf::Mouse::Button::Right)
-        mLocalStatus.mark_cell(rol_col->x, rol_col->y);
+        if (!mFieldUI[rol_col->x][rol_col->y].is_marked)
+            mark_cell(rol_col->x, rol_col->y);
+        else
+            unmark_cell(rol_col->x, rol_col->y);
 }
 
 std::optional<sf::Vector2i> MineFieldUI::get_rol_col_by_pos(
@@ -135,6 +140,20 @@ std::optional<sf::Vector2i> MineFieldUI::get_rol_col_by_pos(
             }
         }
     return {};
+}
+
+void MineFieldUI::mark_cell(size_t row, size_t col) {
+    assert(row < mFieldUI.size() && col < mFieldUI[0].size());
+    auto& cell = mLocalStatus.get_cell(row, col);
+    if (cell.mCellStatus != MineCellStatus::Covered) return;
+    mFieldUI[row][col].is_marked = true;
+}
+
+void MineFieldUI::unmark_cell(size_t row, size_t col) {
+    assert(row < mFieldUI.size() && col < mFieldUI[0].size());
+    auto& cell = mLocalStatus.get_cell(row, col);
+    if (cell.mCellStatus != MineCellStatus::Covered) return;
+    mFieldUI[row][col].is_marked = false;
 }
 
 GameRunningUI::GameRunningUI(LocalStatus& ls)
