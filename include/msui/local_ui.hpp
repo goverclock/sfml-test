@@ -4,6 +4,7 @@
 
 #include "mine_cell.hpp"
 #include "mscore/local_status.hpp"
+#include "renderable.hpp"
 
 struct MineCellUI {
     MineCellUI() : rect({cell_size, cell_size}), mine_number_text({}) {};
@@ -11,11 +12,6 @@ struct MineCellUI {
     sf::RectangleShape rect;
     std::optional<sf::Text> mine_number_text;
     bool is_marked = false;
-};
-
-struct Renderable {
-    virtual void render(sf::RenderWindow& w) = 0;
-    virtual void handle_click_event(sf::RenderWindow& w, sf::Event e) = 0;
 };
 
 class MineFieldUI : public Renderable {
@@ -32,6 +28,17 @@ class MineFieldUI : public Renderable {
     LocalStatus& mLocalStatus;
     std::vector<std::vector<MineCellUI>> mFieldUI;
     sf::Font mFont;
+};
+
+class LobbyUI : public Renderable {
+   public:
+    LobbyUI();
+    void render(sf::RenderWindow& w) override;
+    void handle_click_event(sf::RenderWindow& w, sf::Event e) override;
+
+   private:
+    sf::Font mFont;
+    // TODO: create a button class, which is also Renderable
 };
 
 class GameTitleUI : public Renderable {

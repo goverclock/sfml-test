@@ -1,4 +1,4 @@
-add_library(libmsui local_ui.cpp)
+add_library(msui local_ui.cpp)
 
 include(FetchContent)
 FetchContent_Declare(SFML
@@ -9,10 +9,10 @@ FetchContent_Declare(SFML
     SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-target_link_libraries(libmsui PUBLIC
+target_link_libraries(msui PUBLIC
 	SFML::Graphics
-	libmscore
+	mscore
 )
 
-target_compile_features(libmsui PUBLIC cxx_std_17)
+target_compile_features(msui PUBLIC cxx_std_17)
 

@@ -1,6 +1,17 @@
-#include <iostream>
+#include <print>
 
 #include "msui/local_ui.hpp"
+
+LobbyUI::LobbyUI()
+    : mFont("resource/JetBrainsMono-Regular.ttf")
+/*     , mText10_10(mFont, "Start\n10x10"),
+      mText10_15(mFont, "Start\n10x15")*/
+{
+    assert(false && "lobby ui not implemented");
+}
+
+void LobbyUI::render(sf::RenderWindow& w) {}
+void LobbyUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {}
 
 GameTitleUI::GameTitleUI(LocalStatus& ls)
     : mLocalStatus(ls),
@@ -38,16 +49,16 @@ void GameTitleUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
         e.getIf<sf::Event::MouseButtonPressed>();
     assert(mouse_button_pressed);
     const auto mouse_pos = sf::Mouse::getPosition(w);
-    std::cout << "Title: mouse at: " << mouse_pos.x << " " << mouse_pos.y
-              << std::endl;
+    std::println("Title: mouse at: ({}, {})", mouse_pos.x, mouse_pos.y);
+
     if (mStartButton10_10.getGlobalBounds().contains(
             {(float)mouse_pos.x, (float)mouse_pos.y})) {
-        std::cout << "Title: clicked on Start 10x10" << std::endl;
+        std::println("Title: clicked on Start 10x10");
         mLocalStatus.start_game(10, 10);
     }
     if (mStartButton10_15.getGlobalBounds().contains(
             {(float)mouse_pos.x, (float)mouse_pos.y})) {
-        std::cout << "Title: clicked on Start 10x15" << std::endl;
+        std::println("Title: clicked on Start 10x15");
         mLocalStatus.start_game(10, 15);
     }
 }
@@ -113,14 +124,13 @@ void MineFieldUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
         e.getIf<sf::Event::MouseButtonPressed>();
     assert(mouse_button_pressed);
     const auto mouse_pos = sf::Mouse::getPosition(w);
-    std::cout << "mouse at: " << mouse_pos.x << " " << mouse_pos.y << std::endl;
+    std::println("mouse at: ({}, {})", mouse_pos.x, mouse_pos.y);
     const auto rol_col = get_rol_col_by_pos(mouse_pos);
     if (!rol_col) {
-        std::cout << "not clicking on any cell" << std::endl;
+        std::println("not clicking on any cell");
         return;
     }
-    std::cout << "clicking row col: " << rol_col->x << " " << rol_col->y
-              << std::endl;
+    std::println("clicking row col: ({}, {})", rol_col->x, rol_col->y);
     if (mouse_button_pressed->button == sf::Mouse::Button::Left)
         mLocalStatus.reveal_cell(rol_col->x, rol_col->y);
     if (mouse_button_pressed->button == sf::Mouse::Button::Right)
@@ -171,11 +181,14 @@ void LocalUI::render(sf::RenderWindow& w) {
     std::unique_ptr<MineFieldUI> x;
     if (!mStatusUISP || mUIStatus != mLocalStatus.game_status()) {
         switch (mLocalStatus.game_status()) {
-            case GameStatus::Running:
-                mStatusUISP.reset(new GameRunningUI(mLocalStatus));
+            case GameStatus::Lobby:
+                mStatusUISP.reset(new LobbyUI());
                 break;
             case GameStatus::NotStarted:
                 mStatusUISP.reset(new GameTitleUI(mLocalStatus));
+                break;
+            case GameStatus::Running:
+                mStatusUISP.reset(new GameRunningUI(mLocalStatus));
                 break;
             default:
                 assert(false && "not implemented");

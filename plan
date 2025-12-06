@@ -1,0 +1,10 @@
+order by priority
+
+[] lobby screen to show all discovered rooms
+
+[] room screen to show all connected guests
+
+[] button class, list view class, maybe a widget lib
+
+[] use namespace for each lib
+

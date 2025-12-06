@@ -1,3 +1,3 @@
-add_library(libmscore local_status.cpp)
+add_library(mscore local_status.cpp)
 
-target_compile_features(libmscore PUBLIC cxx_std_17)
+target_compile_features(mscore PUBLIC cxx_std_17)

@@ -1,13 +1,12 @@
 #include <cassert>
 #include <cstdlib>
 #include <ctime>
-#include <iostream>
 #include <queue>
 
 #include "mscore/local_status.hpp"
 
 LocalStatus::LocalStatus()
-    : mGameStatus(GameStatus::NotStarted), mMineField() {}
+    : mGameStatus(GameStatus::Lobby), mMineField() {}
 
 void LocalStatus::start_game(size_t row, size_t col) {
     mGameStatus = GameStatus::Running;

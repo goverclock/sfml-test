@@ -1,8 +1,9 @@
 #pragma once
+
 #include "../mine_cell.hpp"
-#include <memory>
 
 enum class GameStatus {
+    Lobby,
     NotStarted,  // aka title screen
     Running,
 };
