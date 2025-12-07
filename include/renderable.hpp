@@ -1,4 +1,6 @@
 #pragma once
+#include <SFML/Graphics.hpp>
+#include <SFML/Window.hpp>
 
 struct Renderable {
     virtual void render(sf::RenderWindow& w) = 0;

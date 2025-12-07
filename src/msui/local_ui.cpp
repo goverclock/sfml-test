@@ -3,15 +3,49 @@
 #include "msui/local_ui.hpp"
 
 LobbyUI::LobbyUI()
-    : mFont("resource/JetBrainsMono-Regular.ttf")
-/*     , mText10_10(mFont, "Start\n10x10"),
-      mText10_15(mFont, "Start\n10x15")*/
-{
-    assert(false && "lobby ui not implemented");
+    : mFont("resource/JetBrainsMono-Regular.ttf"),
+      mTextCreateRoom(mFont, "Create room") {
+    mCreateRoomBtn.setSize({380.f, 100.f});
+    mCreateRoomBtn.setFillColor(sf::Color::White);
+
+    mTextCreateRoom.setFillColor(sf::Color::Black);
+    mTextCreateRoom.setCharacterSize(50);
 }
 
-void LobbyUI::render(sf::RenderWindow& w) {}
-void LobbyUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {}
+void LobbyUI::render(sf::RenderWindow& w) {
+    sf::Vector2u window_size = w.getSize();
+    float x = window_size.x / 2 - mCreateRoomBtn.getSize().x / 2;
+    float y = window_size.y - 200.f;
+
+    mCreateRoomBtn.setPosition({x, y});
+    w.draw(mCreateRoomBtn);
+
+    mTextCreateRoom.setPosition({x, y});
+    w.draw(mTextCreateRoom);
+
+    mListView.setPosition({0, 0});
+    mListView.render(w);
+}
+
+void LobbyUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
+    const sf::Event::MouseButtonPressed* mouse_button_pressed =
+        e.getIf<sf::Event::MouseButtonPressed>();
+    assert(mouse_button_pressed);
+    const auto mouse_pos = sf::Mouse::getPosition(w);
+    std::println("Lobby: mouse at: ({}, {})", mouse_pos.x, mouse_pos.y);
+
+    if (mCreateRoomBtn.getGlobalBounds().contains(
+            {(float)mouse_pos.x, (float)mouse_pos.y})) {
+        std::println("Lobby: clicked on Create room");
+    }
+
+    if (mouse_button_pressed->button == sf::Mouse::Button::Right) {
+        static int room_number = 0;
+        std::println("TEST: adding room {} to list", room_number);
+        mListView.list.push_back(RoomEntry{.number = room_number});
+        room_number++;
+    }
+}
 
 GameTitleUI::GameTitleUI(LocalStatus& ls)
     : mLocalStatus(ls),

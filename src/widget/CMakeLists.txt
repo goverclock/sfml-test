@@ -1,4 +1,4 @@
-add_library(msui local_ui.cpp)
+add_library(widget list_view.tpp)
 
 include(FetchContent)
 FetchContent_Declare(SFML
@@ -9,11 +9,9 @@ FetchContent_Declare(SFML
     SYSTEM)
 FetchContent_MakeAvailable(SFML)
 
-target_link_libraries(msui PUBLIC
+target_link_libraries(widget PUBLIC
 	SFML::Graphics
-	mscore
-	widget
 )
 
-target_compile_features(msui PUBLIC cxx_std_17)
+target_compile_features(widget PUBLIC cxx_std_20)
 

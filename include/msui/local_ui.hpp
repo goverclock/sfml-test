@@ -1,10 +1,8 @@
 #pragma once
-#include <SFML/Graphics.hpp>
-#include <SFML/Window.hpp>
-
 #include "mine_cell.hpp"
 #include "mscore/local_status.hpp"
 #include "renderable.hpp"
+#include "widget/list_view.hpp"
 
 struct MineCellUI {
     MineCellUI() : rect({cell_size, cell_size}), mine_number_text({}) {};
@@ -30,6 +28,11 @@ class MineFieldUI : public Renderable {
     sf::Font mFont;
 };
 
+struct RoomEntry {
+    int number = 123;
+    std::string to_string() const { return "room " + std::to_string(number); }
+};
+
 class LobbyUI : public Renderable {
    public:
     LobbyUI();
@@ -39,6 +42,9 @@ class LobbyUI : public Renderable {
    private:
     sf::Font mFont;
     // TODO: create a button class, which is also Renderable
+    sf::RectangleShape mCreateRoomBtn;
+    sf::Text mTextCreateRoom;
+    widget::ListView<RoomEntry> mListView;
 };
 
 class GameTitleUI : public Renderable {

@@ -4,7 +4,13 @@ order by priority
 
 [] room screen to show all connected guests
 
-[] button class, list view class, maybe a widget lib
+[] button class
+
+[x] list view class, maybe a widget lib
 
 [] use namespace for each lib
+
+[] lazy rendering if performance needed
+
+[] replace all render() into draw(), aka sf::Drawable
 
