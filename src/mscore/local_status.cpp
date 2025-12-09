@@ -5,8 +5,36 @@
 
 #include "mscore/local_status.hpp"
 
-LocalStatus::LocalStatus()
-    : mGameStatus(GameStatus::Lobby), mMineField() {}
+LocalStatus::LocalStatus() : mGameStatus(GameStatus::Lobby), mMineField() {
+    mGuestInfoList.push_back(
+        GuestInfo{.nickname = "TEST: me", .ip = "127.0.0.1"});
+    mRoomEntryList.push_back(RoomEntry{.id = 123, .name = "TEST: dzd"});
+}
+
+const LocalStatus::RoomEntryList& LocalStatus::get_room_entry_list(
+    bool& updated) {
+    updated = true;  // TODO: only true when get updated from LanPeer
+    return mRoomEntryList;
+}
+
+const LocalStatus::RoomEntryList& LocalStatus::get_room_entry_list() {
+    return mRoomEntryList;
+}
+
+void LocalStatus::host_game() {
+    mGameStatus = GameStatus::Room;
+    mLanPeer.start_broadcast();
+}
+
+const LocalStatus::GuestInfoList& LocalStatus::get_guest_info_list(
+    bool& updated) {
+    updated = true;  // TODO: only true when get updates from LanPeer
+    return mGuestInfoList;
+}
+
+const LocalStatus::GuestInfoList& LocalStatus::get_guest_info_list() {
+    return mGuestInfoList;
+}
 
 void LocalStatus::start_game(size_t row, size_t col) {
     mGameStatus = GameStatus::Running;

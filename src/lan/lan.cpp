@@ -6,6 +6,8 @@
 
 #include "lan/lan.hpp"
 
+namespace lan {
+
 LanPeer::LanPeer() {
     mSocketFd = socket(AF_INET, SOCK_DGRAM, 0);
     assert(mSocketFd);
@@ -31,6 +33,10 @@ LanPeer::~LanPeer() {
     if (mSocketFd > 0) close(mSocketFd);
 }
 
+void LanPeer::start_broadcast() {
+    assert(false && "LanPeer start broadcast not implemented");
+}
+
 void LanPeer::broadcast_as_host() {
     const char* msg = "hello there is a host";
     int len = sendto(mSocketFd, msg, strlen(msg), 0,
@@ -52,3 +58,5 @@ void LanPeer::receive_as_guest() {
     std::println("received {} bytes from {}:{}, msg: '{}'", len, sender_ip,
                  ntohs(host_addr.sin_port), buffer);
 }
+
+};  // namespace lan

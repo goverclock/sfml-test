@@ -28,23 +28,31 @@ class MineFieldUI : public Renderable {
     sf::Font mFont;
 };
 
-struct RoomEntry {
-    int number = 123;
-    std::string to_string() const { return "room " + std::to_string(number); }
-};
-
-class LobbyUI : public Renderable {
+class RoomUI : public Renderable {
    public:
-    LobbyUI();
+    RoomUI(LocalStatus& ls);
     void render(sf::RenderWindow& w) override;
     void handle_click_event(sf::RenderWindow& w, sf::Event e) override;
 
    private:
+    LocalStatus& mLocalStatus;
+    sf::Font mFont;
+    widget::ListView<LocalStatus::GuestInfo> mListView;
+};
+
+class LobbyUI : public Renderable {
+   public:
+    LobbyUI(LocalStatus& ls);
+    void render(sf::RenderWindow& w) override;
+    void handle_click_event(sf::RenderWindow& w, sf::Event e) override;
+
+   private:
+    LocalStatus& mLocalStatus;
     sf::Font mFont;
     // TODO: create a button class, which is also Renderable
     sf::RectangleShape mCreateRoomBtn;
     sf::Text mTextCreateRoom;
-    widget::ListView<RoomEntry> mListView;
+    widget::ListView<LocalStatus::RoomEntry> mListView;
 };
 
 class GameTitleUI : public Renderable {

@@ -1,5 +1,4 @@
 #pragma once
-#include "lan/lan.hpp"
 #include "mscore/local_status.hpp"
 #include "msui/local_ui.hpp"
 
@@ -13,8 +12,7 @@ class GameClient {
    private:
     void handle_input();
     void render();
-    LanPeer mLanPeer;
-    LocalStatus mLocalStatus;
     LocalUI mLocalUI;
+    LocalStatus mLocalStatus;
     sf::RenderWindow mWindow;
 };

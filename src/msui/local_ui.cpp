@@ -2,9 +2,24 @@
 
 #include "msui/local_ui.hpp"
 
-LobbyUI::LobbyUI()
-    : mFont("resource/JetBrainsMono-Regular.ttf"),
-      mTextCreateRoom(mFont, "Create room") {
+RoomUI::RoomUI(LocalStatus& ls)
+    : mLocalStatus(ls),
+      mFont("resource/JetBrainsMono-Regular.ttf"),
+      mListView(ls.get_guest_info_list()) {
+    mListView.setPosition({100.f, 100.f});
+}
+
+void RoomUI::render(sf::RenderWindow& w) { w.draw(mListView); }
+
+void RoomUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
+    std::println("room ui clicked");
+}
+
+LobbyUI::LobbyUI(LocalStatus& ls)
+    : mLocalStatus(ls),
+      mFont("resource/JetBrainsMono-Regular.ttf"),
+      mTextCreateRoom(mFont, "Create room"),
+      mListView(ls.get_room_entry_list()) {
     mCreateRoomBtn.setSize({380.f, 100.f});
     mCreateRoomBtn.setFillColor(sf::Color::White);
 
@@ -23,7 +38,7 @@ void LobbyUI::render(sf::RenderWindow& w) {
     mTextCreateRoom.setPosition({x, y});
     w.draw(mTextCreateRoom);
 
-    mListView.setPosition({0, 0});
+    mListView.setPosition({100.f, 100.f});
     mListView.render(w);
 }
 
@@ -37,13 +52,7 @@ void LobbyUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
     if (mCreateRoomBtn.getGlobalBounds().contains(
             {(float)mouse_pos.x, (float)mouse_pos.y})) {
         std::println("Lobby: clicked on Create room");
-    }
-
-    if (mouse_button_pressed->button == sf::Mouse::Button::Right) {
-        static int room_number = 0;
-        std::println("TEST: adding room {} to list", room_number);
-        mListView.list.push_back(RoomEntry{.number = room_number});
-        room_number++;
+        mLocalStatus.host_game();
     }
 }
 
@@ -216,7 +225,10 @@ void LocalUI::render(sf::RenderWindow& w) {
     if (!mStatusUISP || mUIStatus != mLocalStatus.game_status()) {
         switch (mLocalStatus.game_status()) {
             case GameStatus::Lobby:
-                mStatusUISP.reset(new LobbyUI());
+                mStatusUISP.reset(new LobbyUI(mLocalStatus));
+                break;
+            case GameStatus::Room:
+                mStatusUISP.reset(new RoomUI(mLocalStatus));
                 break;
             case GameStatus::NotStarted:
                 mStatusUISP.reset(new GameTitleUI(mLocalStatus));
