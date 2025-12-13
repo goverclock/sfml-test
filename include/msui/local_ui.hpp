@@ -37,6 +37,8 @@ class RoomUI : public Renderable {
    private:
     LocalStatus& mLocalStatus;
     sf::Font mFont;
+    sf::RectangleShape mExitRoomBtn;
+    sf::Text mTextExitRoom;
     widget::ListView<LocalStatus::GuestInfo> mListView;
 };
 

@@ -1,12 +1,16 @@
 order by priority
 
-[] host a room, show all connected guests
-
 [] lobby screen to show all discovered rooms
+
+[] host a room, show all connected guests
 
 [] room screen to show all connected guests
 
+[] refactor lan with SFML network lib
+
 [] button class
+
+[] host send a message to indicate the room has dismissed
 
 [x] list view class, maybe a widget lib
 

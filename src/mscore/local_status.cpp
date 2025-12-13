@@ -8,29 +8,56 @@
 LocalStatus::LocalStatus() : mGameStatus(GameStatus::Lobby), mMineField() {
     mGuestInfoList.push_back(
         GuestInfo{.nickname = "TEST: me", .ip = "127.0.0.1"});
-    mRoomEntryList.push_back(RoomEntry{.id = 123, .name = "TEST: dzd"});
+    mRoomEntryList.push_back(RoomEntry{.name = "TEST: dzd"});
 }
 
-const LocalStatus::RoomEntryList& LocalStatus::get_room_entry_list(
-    bool& updated) {
-    updated = true;  // TODO: only true when get updated from LanPeer
-    return mRoomEntryList;
+const GameStatus& LocalStatus::game_status() { return mGameStatus; }
+
+void LocalStatus::update() {
+    std::vector<lan::PeerInfo> peer_info_list = mLanPeer.get_peer_info_list();
+
+    while (const std::optional lan_update = mLanPeer.poll_updates()) {
+        switch (*lan_update) {
+            case lan::LanMessageUpdated::PeerInfoList:
+                mRoomEntryList.clear();
+                for (const auto& pi : peer_info_list) {
+                    mRoomEntryList.push_back(
+                        RoomEntry{.name = pi.ip,
+                                  .signal_strength =
+                                      static_cast<int>(pi.signal_strength) + 1});
+                }
+                break;
+            default:
+                assert(false && "case default not implemented");
+                break;
+        }
+    }
 }
 
 const LocalStatus::RoomEntryList& LocalStatus::get_room_entry_list() {
     return mRoomEntryList;
 }
 
-void LocalStatus::host_game() {
+void LocalStatus::host_room() {
     mGameStatus = GameStatus::Room;
-    mLanPeer.start_broadcast();
+    mLanPeer.start_periodically_broadcast();
 }
 
-const LocalStatus::GuestInfoList& LocalStatus::get_guest_info_list(
-    bool& updated) {
-    updated = true;  // TODO: only true when get updates from LanPeer
-    return mGuestInfoList;
+void LocalStatus::host_exit_room() {
+    mGameStatus = GameStatus::Lobby;
+    mLanPeer.stop_periodically_broadcast();
 }
+
+void LocalStatus::guest_exit_room() {
+    assert(false && "guest exit room not implemented");
+}
+
+void LocalStatus::start_listen_room() {
+    mGameStatus = GameStatus::Lobby;
+    mLanPeer.start_periodically_discover();
+}
+
+void LocalStatus::stop_listen_room() { mLanPeer.stop_periodically_discover(); }
 
 const LocalStatus::GuestInfoList& LocalStatus::get_guest_info_list() {
     return mGuestInfoList;
@@ -87,8 +114,6 @@ const MineCell& LocalStatus::get_cell(size_t row, size_t col) {
 }
 
 const MineField& LocalStatus::get_field() { return mMineField; }
-
-const GameStatus& LocalStatus::game_status() { return mGameStatus; }
 
 size_t LocalStatus::field_rows() { return mRows; }
 

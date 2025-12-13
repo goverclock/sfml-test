@@ -17,28 +17,32 @@ class LocalStatus {
     LocalStatus();
 
     const GameStatus& game_status();
+	void update();
 
     // network, in lobby
-    using RoomEntry = struct {
-        int id = -1;
+    void start_listen_room();
+    void stop_listen_room();
+    using RoomEntry = struct RoomEntry {
         std::string name = "";
+        int signal_strength = 3;
         std::string to_string() const {
-            return "room " + std::to_string(id) + " " + name;
+            return std::string("room ") + name + " " +
+                   std::string(signal_strength, '|');
         }
     };
     using RoomEntryList = std::vector<RoomEntry>;
-    const RoomEntryList& get_room_entry_list(bool& updated);
     const RoomEntryList& get_room_entry_list();
 
     // network, in room
-    void host_game(/* TODO: game type, e.g. minesweeprt, geowartry...*/);
-    using GuestInfo = struct {
+    void host_room(/* TODO: game type, e.g. minesweeprt, geowartry...*/);
+    void host_exit_room();   // host clicking exit room button calls this
+    void guest_exit_room();  // guest clicking exit room button calls this
+    using GuestInfo = struct GuestInfo {
         std::string nickname;
         std::string ip;
         std::string to_string() const { return nickname + " " + ip; }
     };
     using GuestInfoList = std::vector<GuestInfo>;
-    const GuestInfoList& get_guest_info_list(bool& updated);
     const GuestInfoList& get_guest_info_list();
 
     // minesweeper
