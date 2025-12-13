@@ -5,14 +5,42 @@
 RoomUI::RoomUI(LocalStatus& ls)
     : mLocalStatus(ls),
       mFont("resource/JetBrainsMono-Regular.ttf"),
+      mTextExitRoom(mFont, "Exit Room"),
       mListView(ls.get_guest_info_list()) {
-    mListView.setPosition({100.f, 100.f});
+    mExitRoomBtn.setSize({380.f, 100.f});
+    mExitRoomBtn.setFillColor(sf::Color::White);
+    mTextExitRoom.setFillColor(sf::Color::Black);
+    mTextExitRoom.setCharacterSize(50);
 }
 
-void RoomUI::render(sf::RenderWindow& w) { w.draw(mListView); }
+void RoomUI::render(sf::RenderWindow& w) {
+    sf::Vector2u window_size = w.getSize();
+    float x = window_size.x - mExitRoomBtn.getSize().x;
+    float y = window_size.y - 200.f;
+
+    mExitRoomBtn.setPosition({x, y});
+    w.draw(mExitRoomBtn);
+
+    mTextExitRoom.setPosition({x, y});
+    w.draw(mTextExitRoom);
+
+    mListView.setPosition({100.f, 100.f});
+    w.draw(mListView);
+}
 
 void RoomUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
-    std::println("room ui clicked");
+    const sf::Event::MouseButtonPressed* mouse_button_pressed =
+        e.getIf<sf::Event::MouseButtonPressed>();
+    assert(mouse_button_pressed);
+    const auto mouse_pos = sf::Mouse::getPosition(w);
+    std::println("Room: mouse at: ({}, {})", mouse_pos.x, mouse_pos.y);
+
+    if (mExitRoomBtn.getGlobalBounds().contains(
+            {(float)mouse_pos.x, (float)mouse_pos.y})) {
+        std::println("Room: clicked on Exit room");
+        // TODO: check we are host or guest, then call host/guest_exit_room
+        mLocalStatus.host_exit_room();
+    }
 }
 
 LobbyUI::LobbyUI(LocalStatus& ls)
@@ -25,11 +53,13 @@ LobbyUI::LobbyUI(LocalStatus& ls)
 
     mTextCreateRoom.setFillColor(sf::Color::Black);
     mTextCreateRoom.setCharacterSize(50);
+
+    ls.start_listen_room();
 }
 
 void LobbyUI::render(sf::RenderWindow& w) {
     sf::Vector2u window_size = w.getSize();
-    float x = window_size.x / 2 - mCreateRoomBtn.getSize().x / 2;
+    float x = 0;
     float y = window_size.y - 200.f;
 
     mCreateRoomBtn.setPosition({x, y});
@@ -52,8 +82,11 @@ void LobbyUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
     if (mCreateRoomBtn.getGlobalBounds().contains(
             {(float)mouse_pos.x, (float)mouse_pos.y})) {
         std::println("Lobby: clicked on Create room");
-        mLocalStatus.host_game();
+        mLocalStatus.host_room();
     }
+
+    if (mLocalStatus.game_status() != GameStatus::Lobby)
+        mLocalStatus.stop_listen_room();
 }
 
 GameTitleUI::GameTitleUI(LocalStatus& ls)
@@ -176,11 +209,12 @@ void MineFieldUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
     std::println("clicking row col: ({}, {})", rol_col->x, rol_col->y);
     if (mouse_button_pressed->button == sf::Mouse::Button::Left)
         mLocalStatus.reveal_cell(rol_col->x, rol_col->y);
-    if (mouse_button_pressed->button == sf::Mouse::Button::Right)
+    if (mouse_button_pressed->button == sf::Mouse::Button::Right) {
         if (!mFieldUI[rol_col->x][rol_col->y].is_marked)
             mark_cell(rol_col->x, rol_col->y);
         else
             unmark_cell(rol_col->x, rol_col->y);
+    }
 }
 
 std::optional<sf::Vector2i> MineFieldUI::get_rol_col_by_pos(

@@ -1,6 +1,9 @@
 config cmake to debug build:
 cmake -DCMAKE_BUILD_TYPE=Debug build
 
+config camke to use clang++:
+cmake -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -B build
+
 # CMake SFML Project Template
 
 This repository template should allow for a fast and hassle-free kick start of your next SFML project using CMake.
