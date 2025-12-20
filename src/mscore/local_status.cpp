@@ -8,7 +8,6 @@
 LocalStatus::LocalStatus() : mGameStatus(GameStatus::Lobby), mMineField() {
     mGuestInfoList.push_back(
         GuestInfo{.nickname = "TEST: me", .ip = "127.0.0.1"});
-    mRoomEntryList.push_back(RoomEntry{.name = "TEST: dzd"});
 }
 
 const GameStatus& LocalStatus::game_status() { return mGameStatus; }

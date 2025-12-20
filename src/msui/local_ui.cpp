@@ -46,13 +46,9 @@ void RoomUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
 LobbyUI::LobbyUI(LocalStatus& ls)
     : mLocalStatus(ls),
       mFont("resource/JetBrainsMono-Regular.ttf"),
-      mTextCreateRoom(mFont, "Create room"),
       mListView(ls.get_room_entry_list()) {
-    mCreateRoomBtn.setSize({380.f, 100.f});
-    mCreateRoomBtn.setFillColor(sf::Color::White);
-
-    mTextCreateRoom.setFillColor(sf::Color::Black);
-    mTextCreateRoom.setCharacterSize(50);
+    mcrbn.set_size({380.f, 100.f});
+    mcrbn.set_fill_color(sf::Color::White);
 
     ls.start_listen_room();
 }
@@ -62,11 +58,8 @@ void LobbyUI::render(sf::RenderWindow& w) {
     float x = 0;
     float y = window_size.y - 200.f;
 
-    mCreateRoomBtn.setPosition({x, y});
-    w.draw(mCreateRoomBtn);
-
-    mTextCreateRoom.setPosition({x, y});
-    w.draw(mTextCreateRoom);
+    mcrbn.set_position({x, y});
+    w.draw(mcrbn);
 
     mListView.setPosition({100.f, 100.f});
     mListView.render(w);
@@ -79,8 +72,8 @@ void LobbyUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
     const auto mouse_pos = sf::Mouse::getPosition(w);
     std::println("Lobby: mouse at: ({}, {})", mouse_pos.x, mouse_pos.y);
 
-    if (mCreateRoomBtn.getGlobalBounds().contains(
-            {(float)mouse_pos.x, (float)mouse_pos.y})) {
+    mcrbn.handle_click_event(w, e);
+    if (mcrbn.is_clicked()) {
         std::println("Lobby: clicked on Create room");
         mLocalStatus.host_room();
     }

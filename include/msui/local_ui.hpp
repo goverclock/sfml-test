@@ -3,6 +3,7 @@
 #include "mscore/local_status.hpp"
 #include "renderable.hpp"
 #include "widget/list_view.hpp"
+#include "widget/button.hpp"
 
 struct MineCellUI {
     MineCellUI() : rect({cell_size, cell_size}), mine_number_text({}) {};
@@ -52,8 +53,7 @@ class LobbyUI : public Renderable {
     LocalStatus& mLocalStatus;
     sf::Font mFont;
     // TODO: create a button class, which is also Renderable
-    sf::RectangleShape mCreateRoomBtn;
-    sf::Text mTextCreateRoom;
+	widget::Button mcrbn;
     widget::ListView<LocalStatus::RoomEntry> mListView;
 };
 
