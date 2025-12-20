@@ -1,135 +1,95 @@
 #include <print>
 
+#include "ergonomics.hpp"
 #include "msui/local_ui.hpp"
 
 RoomUI::RoomUI(LocalStatus& ls)
-    : mLocalStatus(ls),
-      mFont("resource/JetBrainsMono-Regular.ttf"),
-      mTextExitRoom(mFont, "Exit Room"),
-      mListView(ls.get_guest_info_list()) {
-    mExitRoomBtn.setSize({380.f, 100.f});
-    mExitRoomBtn.setFillColor(sf::Color::White);
-    mTextExitRoom.setFillColor(sf::Color::Black);
-    mTextExitRoom.setCharacterSize(50);
+    : mLocalStatus(ls), mListView(ls.get_guest_info_list()) {
+    mExitRoomBtn.set_size({380.f, 100.f});
+    mExitRoomBtn.set_fill_color(sf::Color::White);
+    mExitRoomBtn.set_text("Exit room");
+    mExitRoomBtn.on_click([&] {
+        std::println("Room: clicked on Exit room");
+        // TODO: check we are host or guest, then call host/guest_exit_room
+        mLocalStatus.host_exit_room();
+    });
 }
 
 void RoomUI::render(sf::RenderWindow& w) {
     sf::Vector2u window_size = w.getSize();
-    float x = window_size.x - mExitRoomBtn.getSize().x;
+    float x = window_size.x - mExitRoomBtn.get_size().x;
     float y = window_size.y - 200.f;
 
-    mExitRoomBtn.setPosition({x, y});
+    mExitRoomBtn.set_position({x, y});
     w.draw(mExitRoomBtn);
-
-    mTextExitRoom.setPosition({x, y});
-    w.draw(mTextExitRoom);
 
     mListView.setPosition({100.f, 100.f});
     w.draw(mListView);
 }
 
 void RoomUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
-    const sf::Event::MouseButtonPressed* mouse_button_pressed =
-        e.getIf<sf::Event::MouseButtonPressed>();
-    assert(mouse_button_pressed);
-    const auto mouse_pos = sf::Mouse::getPosition(w);
-    std::println("Room: mouse at: ({}, {})", mouse_pos.x, mouse_pos.y);
-
-    if (mExitRoomBtn.getGlobalBounds().contains(
-            {(float)mouse_pos.x, (float)mouse_pos.y})) {
-        std::println("Room: clicked on Exit room");
-        // TODO: check we are host or guest, then call host/guest_exit_room
-        mLocalStatus.host_exit_room();
-    }
+    mExitRoomBtn.handle_click_event(w, e);
 }
 
 LobbyUI::LobbyUI(LocalStatus& ls)
-    : mLocalStatus(ls),
-      mFont("resource/JetBrainsMono-Regular.ttf"),
-      mListView(ls.get_room_entry_list()) {
-    mcrbn.set_size({380.f, 100.f});
-    mcrbn.set_fill_color(sf::Color::White);
+    : mLocalStatus(ls), mListView(ls.get_room_entry_list()) {
+    mCreateRoomBtn.set_size({380.f, 100.f});
+    mCreateRoomBtn.set_text("Create room");
+    mCreateRoomBtn.on_click([&] {
+        std::println("Lobby: clicked on Create room");
+        mLocalStatus.host_room();
+    });
 
     ls.start_listen_room();
 }
+
+LobbyUI::~LobbyUI() { mLocalStatus.stop_listen_room(); }
 
 void LobbyUI::render(sf::RenderWindow& w) {
     sf::Vector2u window_size = w.getSize();
     float x = 0;
     float y = window_size.y - 200.f;
 
-    mcrbn.set_position({x, y});
-    w.draw(mcrbn);
+    mCreateRoomBtn.set_position({x, y});
+    w.draw(mCreateRoomBtn);
 
     mListView.setPosition({100.f, 100.f});
     mListView.render(w);
 }
 
 void LobbyUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
-    const sf::Event::MouseButtonPressed* mouse_button_pressed =
-        e.getIf<sf::Event::MouseButtonPressed>();
-    assert(mouse_button_pressed);
-    const auto mouse_pos = sf::Mouse::getPosition(w);
-    std::println("Lobby: mouse at: ({}, {})", mouse_pos.x, mouse_pos.y);
-
-    mcrbn.handle_click_event(w, e);
-    if (mcrbn.is_clicked()) {
-        std::println("Lobby: clicked on Create room");
-        mLocalStatus.host_room();
-    }
-
-    if (mLocalStatus.game_status() != GameStatus::Lobby)
-        mLocalStatus.stop_listen_room();
+    mCreateRoomBtn.handle_click_event(w, e);
 }
 
-GameTitleUI::GameTitleUI(LocalStatus& ls)
-    : mLocalStatus(ls),
-      mFont("resource/JetBrainsMono-Regular.ttf"),
-      mText10_10(mFont, "Start\n10x10"),
-      mText10_15(mFont, "Start\n10x15") {
-    mStartButton10_10.setSize({300.f, 140.f});
-    mStartButton10_15.setSize({300.f, 140.f});
-    mStartButton10_10.setFillColor(sf::Color::White);
-    mStartButton10_15.setFillColor(sf::Color::White);
+GameTitleUI::GameTitleUI(LocalStatus& ls) : mLocalStatus(ls) {
+    mStart10x10Btn.set_size({300.f, 140.f});
+    mStart10x10Btn.set_text("Start\n10x10");
+    mStart10x10Btn.on_click([&] {
+        std::println("Title: clicked on Start 10x10");
+        mLocalStatus.start_game(10, 10);
+    });
 
-    mText10_10.setFillColor(sf::Color::Black);
-    mText10_15.setFillColor(sf::Color::Black);
-    mText10_10.setCharacterSize(50);
-    mText10_15.setCharacterSize(50);
+    mStart10x15Btn.set_size({300.f, 140.f});
+    mStart10x15Btn.set_text("Start\n10x15");
+    mStart10x15Btn.on_click([&] {
+        std::println("Title: clicked on Start 10x15");
+        mLocalStatus.start_game(10, 15);
+    });
 }
 
 void GameTitleUI::render(sf::RenderWindow& w) {
     sf::Vector2u window_size = w.getSize();
-    float x = window_size.x / 2 - mStartButton10_10.getSize().x / 2;
+    float x = window_size.x / 2 - mStart10x10Btn.get_size().x / 2;
     float y = window_size.y / 2;
-    mStartButton10_10.setPosition({x, y});
-    mStartButton10_15.setPosition({x, y + 200.f});
-    w.draw(mStartButton10_10);
-    w.draw(mStartButton10_15);
-
-    mText10_10.setPosition({x, y});
-    mText10_15.setPosition({x, y + 200.f});
-    w.draw(mText10_10);
-    w.draw(mText10_15);
+    mStart10x10Btn.set_position({x, y});
+    mStart10x15Btn.set_position({x, y + 200.f});
+    w.draw(mStart10x10Btn);
+    w.draw(mStart10x15Btn);
 }
 
 void GameTitleUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
-    const sf::Event::MouseButtonPressed* mouse_button_pressed =
-        e.getIf<sf::Event::MouseButtonPressed>();
-    assert(mouse_button_pressed);
-    const auto mouse_pos = sf::Mouse::getPosition(w);
-    std::println("Title: mouse at: ({}, {})", mouse_pos.x, mouse_pos.y);
-
-    if (mStartButton10_10.getGlobalBounds().contains(
-            {(float)mouse_pos.x, (float)mouse_pos.y})) {
-        std::println("Title: clicked on Start 10x10");
-        mLocalStatus.start_game(10, 10);
-    }
-    if (mStartButton10_15.getGlobalBounds().contains(
-            {(float)mouse_pos.x, (float)mouse_pos.y})) {
-        std::println("Title: clicked on Start 10x15");
-        mLocalStatus.start_game(10, 15);
-    }
+    mStart10x10Btn.handle_click_event(w, e);
+    mStart10x15Btn.handle_click_event(w, e);
 }
 
 MineFieldUI::MineFieldUI(LocalStatus& ls)
@@ -252,19 +212,23 @@ void LocalUI::render(sf::RenderWindow& w) {
     if (!mStatusUISP || mUIStatus != mLocalStatus.game_status()) {
         switch (mLocalStatus.game_status()) {
             case GameStatus::Lobby:
+                std::println("to Lobby");
                 mStatusUISP.reset(new LobbyUI(mLocalStatus));
                 break;
             case GameStatus::Room:
+                std::println("to Room");
                 mStatusUISP.reset(new RoomUI(mLocalStatus));
                 break;
             case GameStatus::NotStarted:
+                std::println("to GameTitle");
                 mStatusUISP.reset(new GameTitleUI(mLocalStatus));
                 break;
             case GameStatus::Running:
+                std::println("to GameRunning");
                 mStatusUISP.reset(new GameRunningUI(mLocalStatus));
                 break;
             default:
-                assert(false && "not implemented");
+                UNREACHABLE();
                 break;
         }
         mUIStatus = mLocalStatus.game_status();

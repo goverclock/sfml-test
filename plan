@@ -14,7 +14,7 @@ order by priority
 
 [] refactor lan with SFML network lib
 
-[] button class
+[x] button class
 
 [] host send a message to indicate the room has dismissed
 

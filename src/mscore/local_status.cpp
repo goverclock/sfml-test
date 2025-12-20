@@ -20,10 +20,10 @@ void LocalStatus::update() {
             case lan::LanMessageUpdated::PeerInfoList:
                 mRoomEntryList.clear();
                 for (const auto& pi : peer_info_list) {
-                    mRoomEntryList.push_back(
-                        RoomEntry{.name = pi.ip,
-                                  .signal_strength =
-                                      static_cast<int>(pi.signal_strength) + 1});
+                    mRoomEntryList.push_back(RoomEntry{
+                        .name = pi.ip,
+                        .signal_strength =
+                            static_cast<int>(pi.signal_strength) + 1});
                 }
                 break;
             default:

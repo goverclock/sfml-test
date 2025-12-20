@@ -27,7 +27,8 @@ void GameClient::run() {
             mWindow.clear(sf::Color(55, 55, 55, 0));
             mLocalUI.render(mWindow);
             mWindow.display();
-        }
+        } else
+            game_running = false;
     }
 
     std::println("exiting, normally");

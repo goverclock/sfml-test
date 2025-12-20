@@ -1,4 +1,5 @@
 #pragma once
+#include <cstring>
 #include <print>
 
 #define TODO_MSG "TODO: {}:{} is not implemented"
@@ -12,3 +13,5 @@
         std::println("");                                           \
         exit(1);                                                    \
     } while (0)
+
+#define UNREACHABLE() assert(false && "reached unreachable code")
