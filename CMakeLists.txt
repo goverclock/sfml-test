@@ -11,5 +11,6 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_subdirectory(src/mscore)
 add_subdirectory(src/msui)
 add_subdirectory(src/lan)
+add_subdirectory(src/widget)
 add_subdirectory(apps)
 

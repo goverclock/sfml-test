@@ -2,6 +2,7 @@
 #include "mine_cell.hpp"
 #include "mscore/local_status.hpp"
 #include "renderable.hpp"
+#include "widget/button.hpp"
 #include "widget/list_view.hpp"
 
 struct MineCellUI {
@@ -36,24 +37,21 @@ class RoomUI : public Renderable {
 
    private:
     LocalStatus& mLocalStatus;
-    sf::Font mFont;
-    sf::RectangleShape mExitRoomBtn;
-    sf::Text mTextExitRoom;
+    widget::Button mExitRoomBtn;
     widget::ListView<LocalStatus::GuestInfo> mListView;
 };
 
 class LobbyUI : public Renderable {
    public:
     LobbyUI(LocalStatus& ls);
+    ~LobbyUI();
     void render(sf::RenderWindow& w) override;
     void handle_click_event(sf::RenderWindow& w, sf::Event e) override;
 
    private:
     LocalStatus& mLocalStatus;
-    sf::Font mFont;
     // TODO: create a button class, which is also Renderable
-    sf::RectangleShape mCreateRoomBtn;
-    sf::Text mTextCreateRoom;
+    widget::Button mCreateRoomBtn;
     widget::ListView<LocalStatus::RoomEntry> mListView;
 };
 
@@ -65,13 +63,8 @@ class GameTitleUI : public Renderable {
 
    private:
     LocalStatus& mLocalStatus;
-    // TODO: refactor into a ResourceManager to store mFont for all class
-    sf::Font mFont;
-    // TODO: create a button class, which is also Renderable
-    sf::RectangleShape mStartButton10_10;
-    sf::Text mText10_10;
-    sf::RectangleShape mStartButton10_15;
-    sf::Text mText10_15;
+	widget::Button mStart10x10Btn;
+	widget::Button mStart10x15Btn;
 };
 
 class GameRunningUI : public Renderable {

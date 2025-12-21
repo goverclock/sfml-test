@@ -1,14 +1,20 @@
 order by priority
 
-[] lobby screen to show all discovered rooms
+[x] lobby screen to show all discovered rooms
+
+[] click a room to connect to it
 
 [] host a room, show all connected guests
 
+[] tell room name to guests with the broadcast message
+
 [] room screen to show all connected guests
+
+[] UI should be rendered only when needed, not while true loop
 
 [] refactor lan with SFML network lib
 
-[] button class
+[x] button class
 
 [] host send a message to indicate the room has dismissed
 

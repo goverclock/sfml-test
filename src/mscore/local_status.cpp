@@ -8,7 +8,6 @@
 LocalStatus::LocalStatus() : mGameStatus(GameStatus::Lobby), mMineField() {
     mGuestInfoList.push_back(
         GuestInfo{.nickname = "TEST: me", .ip = "127.0.0.1"});
-    mRoomEntryList.push_back(RoomEntry{.name = "TEST: dzd"});
 }
 
 const GameStatus& LocalStatus::game_status() { return mGameStatus; }
@@ -21,10 +20,10 @@ void LocalStatus::update() {
             case lan::LanMessageUpdated::PeerInfoList:
                 mRoomEntryList.clear();
                 for (const auto& pi : peer_info_list) {
-                    mRoomEntryList.push_back(
-                        RoomEntry{.name = pi.ip,
-                                  .signal_strength =
-                                      static_cast<int>(pi.signal_strength) + 1});
+                    mRoomEntryList.push_back(RoomEntry{
+                        .name = pi.ip,
+                        .signal_strength =
+                            static_cast<int>(pi.signal_strength) + 1});
                 }
                 break;
             default:
