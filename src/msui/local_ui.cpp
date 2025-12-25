@@ -20,7 +20,7 @@ void RoomUI::render(sf::RenderWindow& w) {
     float x = window_size.x - mExitRoomBtn.get_size().x;
     float y = window_size.y - 200.f;
 
-    mExitRoomBtn.set_position({x, y});
+    mExitRoomBtn.setPosition({x, y});
     w.draw(mExitRoomBtn);
 
     mListView.setPosition({100.f, 100.f});
@@ -37,20 +37,24 @@ LobbyUI::LobbyUI(LocalStatus& ls)
     mCreateRoomBtn.set_text("Create room");
     mCreateRoomBtn.on_click([&] {
         std::println("Lobby: clicked on Create room");
-        mLocalStatus.host_room();
+        mLocalStatus.create_room();
     });
 
-    ls.start_listen_room();
+    mListView.on_item_click([&](const LocalStatus::RoomEntry& room_entry) {
+        ls.join_room(room_entry);
+    });
+
+    ls.start_discover_room();
 }
 
-LobbyUI::~LobbyUI() { mLocalStatus.stop_listen_room(); }
+LobbyUI::~LobbyUI() { mLocalStatus.stop_discover_room(); }
 
 void LobbyUI::render(sf::RenderWindow& w) {
     sf::Vector2u window_size = w.getSize();
     float x = 0;
     float y = window_size.y - 200.f;
 
-    mCreateRoomBtn.set_position({x, y});
+    mCreateRoomBtn.setPosition({x, y});
     w.draw(mCreateRoomBtn);
 
     mListView.setPosition({100.f, 100.f});
@@ -59,6 +63,7 @@ void LobbyUI::render(sf::RenderWindow& w) {
 
 void LobbyUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
     mCreateRoomBtn.handle_click_event(w, e);
+    mListView.handle_click_event(w, e);
 }
 
 GameTitleUI::GameTitleUI(LocalStatus& ls) : mLocalStatus(ls) {
@@ -81,8 +86,8 @@ void GameTitleUI::render(sf::RenderWindow& w) {
     sf::Vector2u window_size = w.getSize();
     float x = window_size.x / 2 - mStart10x10Btn.get_size().x / 2;
     float y = window_size.y / 2;
-    mStart10x10Btn.set_position({x, y});
-    mStart10x15Btn.set_position({x, y + 200.f});
+    mStart10x10Btn.setPosition({x, y});
+    mStart10x15Btn.setPosition({x, y + 200.f});
     w.draw(mStart10x10Btn);
     w.draw(mStart10x15Btn);
 }

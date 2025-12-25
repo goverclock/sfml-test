@@ -6,6 +6,7 @@
 #include <print>
 #include <thread>
 
+#include "ergonomics.hpp"
 #include "lan/lan.hpp"
 
 namespace lan {
@@ -54,6 +55,25 @@ void LanPeer::start_periodically_broadcast() {
 }
 
 void LanPeer::stop_periodically_broadcast() { mIsBroadcasting.store(false); }
+
+void LanPeer::start_listen_guest() {
+    mIsListeningGuest.store(true);
+    std::thread listen_guest_thread([this] {
+        sf::TcpListener listener;
+        if (listener.listen(PORT) != sf::Socket::Status::Done) {
+            std::println("fail to listen on port {}", PORT);
+            this->mIsListeningGuest.store(false);
+        }
+
+        sf::TcpSocket guest;
+        if (listener.accept(guest) != sf::Socket::Status::Done)
+            std::println("fail to accept guest connection");
+        std::println("connected!");
+    });
+    listen_guest_thread.detach();
+}
+
+void LanPeer::stop_listen_guest() { mIsListeningGuest.store(false); }
 
 void LanPeer::start_periodically_discover() {
     mIsDiscovering.store(true);
@@ -110,7 +130,8 @@ void LanPeer::update_peer_info() {
     // remove lost rooms
     for (auto it = mLastHeard.begin(); it != mLastHeard.end();) {
         if (std::difftime(now, it->second) > room_lost_timeout) {
-            std::println("enque update for PeerInfo from {} to lost", it->first);
+            std::println("enque update for PeerInfo from {} to lost",
+                         it->first);
             updated = true;
             mPeerInfoList.erase(it->first);
             it = mLastHeard.erase(it);
@@ -146,5 +167,21 @@ std::vector<PeerInfo> LanPeer::get_peer_info_list() {
     for (const auto& p : mPeerInfoList) ret.push_back(p.second);
     return ret;
 }
+
+bool LanPeer::connect_to_host(std::string host_ip) {
+    // TODO: for now we just block on the connect call, which means main thread
+    // is freezed
+    sf::Socket::Status status =
+        mTcpSocket.connect(*sf::IpAddress::resolve(host_ip), PORT);
+    std::println("trying to connect to {}, got status {}", host_ip,
+                 static_cast<int>(status));
+    if (status != sf::Socket::Status::Done) return false;
+
+    //    TODO();
+	std::println("successfully connected to host!");
+    return true;
+}
+
+void LanPeer::start_heartbeat_to_host() { TODO(); }
 
 };  // namespace lan

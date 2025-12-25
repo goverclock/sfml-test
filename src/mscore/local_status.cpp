@@ -3,6 +3,7 @@
 #include <ctime>
 #include <queue>
 
+#include "ergonomics.hpp"
 #include "mscore/local_status.hpp"
 
 LocalStatus::LocalStatus() : mGameStatus(GameStatus::Lobby), mMineField() {
@@ -21,7 +22,8 @@ void LocalStatus::update() {
                 mRoomEntryList.clear();
                 for (const auto& pi : peer_info_list) {
                     mRoomEntryList.push_back(RoomEntry{
-                        .name = pi.ip,
+                        .name = pi.ip + "'s room",
+                        .ip = pi.ip,
                         .signal_strength =
                             static_cast<int>(pi.signal_strength) + 1});
                 }
@@ -37,26 +39,39 @@ const LocalStatus::RoomEntryList& LocalStatus::get_room_entry_list() {
     return mRoomEntryList;
 }
 
-void LocalStatus::host_room() {
-    mGameStatus = GameStatus::Room;
-    mLanPeer.start_periodically_broadcast();
-}
-
 void LocalStatus::host_exit_room() {
     mGameStatus = GameStatus::Lobby;
     mLanPeer.stop_periodically_broadcast();
 }
 
-void LocalStatus::guest_exit_room() {
-    assert(false && "guest exit room not implemented");
+void LocalStatus::guest_exit_room() { TODO(); }
+
+void LocalStatus::create_room() {
+    mGameStatus = GameStatus::Room;
+    mLanPeer.start_periodically_broadcast();
+    mLanPeer.start_listen_guest();
 }
 
-void LocalStatus::start_listen_room() {
+void LocalStatus::join_room(const RoomEntry& room_entry) {
+    std::println("trying to join {}", room_entry.name);
+    if (!mLanPeer.connect_to_host(room_entry.ip)) {
+        std::println("fail to connect to {}", room_entry.ip);
+        return;
+    }
+    mLanPeer.start_heartbeat_to_host();
+    mGameStatus = GameStatus::RoomAsGuest;
+
+    TODO();
+}
+
+void LocalStatus::start_discover_room() {
     mGameStatus = GameStatus::Lobby;
     mLanPeer.start_periodically_discover();
 }
 
-void LocalStatus::stop_listen_room() { mLanPeer.stop_periodically_discover(); }
+void LocalStatus::stop_discover_room() {
+    mLanPeer.stop_periodically_discover();
+}
 
 const LocalStatus::GuestInfoList& LocalStatus::get_guest_info_list() {
     return mGuestInfoList;

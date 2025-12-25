@@ -8,8 +8,14 @@
 enum class GameStatus {
     Lobby,
     Room,
+    RoomAsGuest,
     NotStarted,  // aka title screen
     Running,
+};
+
+enum class GameType {
+    MineSweeper,
+    Geowartry,
 };
 
 class LocalStatus {
@@ -17,24 +23,28 @@ class LocalStatus {
     LocalStatus();
 
     const GameStatus& game_status();
-	void update();
+    void update();
 
-    // network, in lobby
-    void start_listen_room();
-    void stop_listen_room();
     using RoomEntry = struct RoomEntry {
         std::string name = "";
-        int signal_strength = 3;
+        std::string ip;
+        int signal_strength;
+        int player_count;
+        GameType game_type;
         std::string to_string() const {
-            return std::string("room ") + name + " " +
-                   std::string(signal_strength, '|');
+            return name + " " + std::string(signal_strength, '|');
         }
     };
     using RoomEntryList = std::vector<RoomEntry>;
+
+    // network, in lobby
     const RoomEntryList& get_room_entry_list();
+    void create_room(/* TODO: game type, e.g. minesweeprt, geowartry...*/);
+    void join_room(const RoomEntry& room_entry);
+    void start_discover_room();
+    void stop_discover_room();
 
     // network, in room
-    void host_room(/* TODO: game type, e.g. minesweeprt, geowartry...*/);
     void host_exit_room();   // host clicking exit room button calls this
     void guest_exit_room();  // guest clicking exit room button calls this
     using GuestInfo = struct GuestInfo {

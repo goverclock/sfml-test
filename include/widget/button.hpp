@@ -13,7 +13,6 @@ class Button : public Renderable,
            std::string text = "unnamed button");
 
     void on_click(const std::function<void(void)>& callback_func);
-    void set_position(sf::Vector2f pos);
     void set_size(sf::Vector2f size);
     sf::Vector2f get_size() const;
     void set_fill_color(sf::Color color);

@@ -1,5 +1,6 @@
 #pragma once
 #include <concepts>
+#include <functional>
 #include <vector>
 
 #include "renderable.hpp"
@@ -15,7 +16,10 @@ class ListView : public Renderable,
                  public sf::Transformable,
                  public sf::Drawable {
    public:
-    ListView(const std::vector<T>& item_list) : list(item_list) {};
+    ListView(const std::vector<T>& item_list);
+
+    void on_item_click(std::function<void(const T&)>);
+
     // Renderable
     void render(sf::RenderWindow& w) override;
     void handle_click_event(sf::RenderWindow& w, sf::Event e) override;
@@ -24,7 +28,11 @@ class ListView : public Renderable,
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
    private:
-    const std::vector<T>& list;
+    const std::vector<T>& mItemList;
+    sf::RectangleShape mEntryRect;
+	sf::Text mEntryText;
+	sf::Font mFont;
+    std::function<void(const T&)> mClickItemCallbackFunc;
 };
 
 };  // namespace widget
