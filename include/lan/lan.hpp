@@ -1,8 +1,4 @@
 #pragma once
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-
 #include <SFML/Network.hpp>
 #include <atomic>
 #include <cassert>
@@ -51,8 +47,8 @@ struct PeerInfo {
 
 class LanPeer {
    public:
-    LanPeer();
-    ~LanPeer();
+    LanPeer() = default;
+    ~LanPeer() = default;
 
     // as host
     void start_periodically_broadcast();
@@ -70,26 +66,22 @@ class LanPeer {
     std::vector<PeerInfo> get_peer_info_list();
 
    private:
+    constexpr static int PORT = 6969;
+    constexpr static int BROADCAST_INTERVAL = 1;  // seconds
+
     std::mutex mLock;
 
+    // TODO: actually just room info, change these names
     void update_peer_info();
     std::map<std::string, PeerInfo> mPeerInfoList;
+    // TODO: change to sf::IpAddr, std::time_t
     std::unordered_map<std::string, std::time_t> mLastHeard;
 
     void enque_updateL(LanMessageUpdated message);
     std::unordered_set<LanMessageUpdated> mUpdatedSet;
 
-    // host
-    void broadcast_as_host();
+    sf::TcpSocket mToHostTcpSocket;
 
-    // guest
-    void receive_as_guest();
-    sf::TcpSocket mTcpSocket;
-
-    constexpr static int PORT = 6969;
-    constexpr static int BROADCAST_INTERVAL = 1;  // seconds
-    int mSocketFd;
-    struct sockaddr_in mBroadcastAddr;
     std::atomic<bool> mIsBroadcasting = false;
     std::atomic<bool> mIsListeningGuest = false;
     std::atomic<bool> mIsDiscovering = false;

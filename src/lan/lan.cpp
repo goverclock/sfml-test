@@ -1,6 +1,3 @@
-#include <fcntl.h>
-#include <unistd.h>
-
 #include <cassert>
 #include <cstring>
 #include <print>
@@ -10,31 +7,6 @@
 #include "lan/lan.hpp"
 
 namespace lan {
-
-LanPeer::LanPeer() {
-    mSocketFd = socket(AF_INET, SOCK_DGRAM, 0);
-    assert(mSocketFd);
-    int val = 1;
-    int ret =
-        setsockopt(mSocketFd, SOL_SOCKET, SO_BROADCAST, &val, sizeof(val));
-    assert(!ret);
-    ret = setsockopt(mSocketFd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
-    assert(!ret);
-
-    struct sockaddr_in local_addr;
-    local_addr.sin_family = AF_INET;
-    local_addr.sin_port = htons(LanPeer::PORT);
-    local_addr.sin_addr.s_addr = INADDR_ANY;
-    ret = bind(mSocketFd, (struct sockaddr*)&local_addr, sizeof(local_addr));
-    assert(!ret);
-
-    mBroadcastAddr = local_addr;
-    mBroadcastAddr.sin_addr.s_addr = inet_addr("255.255.255.255");
-}
-
-LanPeer::~LanPeer() {
-    if (mSocketFd > 0) close(mSocketFd);
-}
 
 std::optional<LanMessageUpdated> LanPeer::poll_updates() {
     std::lock_guard guard(mLock);
@@ -50,76 +22,87 @@ void LanPeer::enque_updateL(LanMessageUpdated message) {
 
 void LanPeer::start_periodically_broadcast() {
     mIsBroadcasting.store(true);
-    std::thread broadcasting_thread(&LanPeer::broadcast_as_host, this);
+    std::thread broadcasting_thread([this] {
+        sf::UdpSocket socket;
+        while (mIsBroadcasting.load()) {
+            static const char* str =
+                "hello there is a host";  // maybe send room name
+            std::array<char, 32> msg;
+            std::strncpy(msg.data(), str, std::strlen(str));
+            std::println("broadcasting with {} bytes", msg.size());
+            if (socket.send(msg.data(), msg.size(), sf::IpAddress::Broadcast,
+                            PORT) != sf::Socket::Status::Done) {
+                std::println("fail to send broadcast message");
+            }
+            sleep(1);
+        }
+    });
     broadcasting_thread.detach();
 }
 
 void LanPeer::stop_periodically_broadcast() { mIsBroadcasting.store(false); }
+
+void LanPeer::start_periodically_discover() {
+    mIsDiscovering.store(true);
+    std::thread discovering_thread([this] {
+        sf::UdpSocket socket;
+        socket.setBlocking(false);
+        if (socket.bind(PORT) != sf::Socket::Status::Done) {
+            std::println("fail to UDP bind port {}", PORT);
+            mIsDiscovering.store(false);
+        }
+
+        std::optional<sf::IpAddress> sender_ip = sf::IpAddress::Broadcast;
+        unsigned short sender_port;
+        std::array<char, 32> data;
+        size_t len = 0;
+        while (mIsDiscovering.load()) {
+            const sf::Socket::Status status = socket.receive(
+                data.data(), data.size(), len, sender_ip, sender_port);
+            switch (status) {
+                case sf::Socket::Status::Done:
+                    std::println("received {} bytes from {}:{}, data: '{}' ",
+                                 len, sender_ip->toString(), sender_port,
+                                 data.data());
+                    mLock.lock();
+                    mLastHeard[sender_ip->toString()] = std::time(nullptr);
+                    mLock.unlock();
+                    break;
+                case sf::Socket::Status::NotReady:
+                    update_peer_info();
+                    sleep(1);
+                    break;
+                default:
+                    std::println("discovery status: {}",
+                                 static_cast<int>(status));
+            }
+        }
+    });
+    discovering_thread.detach();
+}
+
+void LanPeer::stop_periodically_discover() { mIsDiscovering.store(false); }
 
 void LanPeer::start_listen_guest() {
     mIsListeningGuest.store(true);
     std::thread listen_guest_thread([this] {
         sf::TcpListener listener;
         if (listener.listen(PORT) != sf::Socket::Status::Done) {
-            std::println("fail to listen on port {}", PORT);
+            std::println("fail to TCP listen on port {}", PORT);
             this->mIsListeningGuest.store(false);
         }
 
         sf::TcpSocket guest;
-        if (listener.accept(guest) != sf::Socket::Status::Done)
-            std::println("fail to accept guest connection");
-        std::println("connected!");
+        while (mIsListeningGuest.load()) {
+            if (listener.accept(guest) != sf::Socket::Status::Done)
+                std::println("fail to accept guest connection");
+            std::println("connected!");
+        }
     });
     listen_guest_thread.detach();
 }
 
 void LanPeer::stop_listen_guest() { mIsListeningGuest.store(false); }
-
-void LanPeer::start_periodically_discover() {
-    mIsDiscovering.store(true);
-    std::thread discovering_thread(&LanPeer::receive_as_guest, this);
-    discovering_thread.detach();
-}
-
-void LanPeer::stop_periodically_discover() { mIsDiscovering.store(false); }
-
-void LanPeer::broadcast_as_host() {
-    while (mIsBroadcasting.load()) {
-        const char* msg =
-            "hello there is a host";  // TODO: maybe send room name
-        int len =
-            sendto(mSocketFd, msg, strlen(msg), 0,
-                   (struct sockaddr*)&mBroadcastAddr, sizeof(mBroadcastAddr));
-        std::println("broadcasting with {} bytes", len);
-        assert(len == strlen(msg));
-        sleep(1);
-    }
-}
-
-void LanPeer::receive_as_guest() {
-    char buffer[64];
-    struct sockaddr_in host_addr;
-    socklen_t host_addr_len = sizeof(host_addr);
-    while (mIsDiscovering.load()) {
-        ssize_t len =
-            recvfrom(mSocketFd, buffer, sizeof(buffer) - 1, MSG_DONTWAIT,
-                     (struct sockaddr*)&host_addr, &host_addr_len);
-
-        //    assert(len > 0);
-        buffer[len] = '\0';
-        std::string sender_ip = inet_ntoa(host_addr.sin_addr);
-        if (len != -1) {
-            std::println("received {} bytes from {}:{}, msg: '{}'", len,
-                         sender_ip, ntohs(host_addr.sin_port), buffer);
-            mLock.lock();
-            mLastHeard[sender_ip] = std::time(nullptr);
-            mLock.unlock();
-        } else {
-            sleep(1);
-            update_peer_info();
-        }
-    }
-}
 
 void LanPeer::update_peer_info() {
     std::lock_guard guard(mLock);
@@ -172,13 +155,13 @@ bool LanPeer::connect_to_host(std::string host_ip) {
     // TODO: for now we just block on the connect call, which means main thread
     // is freezed
     sf::Socket::Status status =
-        mTcpSocket.connect(*sf::IpAddress::resolve(host_ip), PORT);
-    std::println("trying to connect to {}, got status {}", host_ip,
+        mToHostTcpSocket.connect(*sf::IpAddress::resolve(host_ip), PORT);
+    std::println("trying to connect to {}:{}, got status {}", host_ip, PORT,
                  static_cast<int>(status));
     if (status != sf::Socket::Status::Done) return false;
 
     //    TODO();
-	std::println("successfully connected to host!");
+    std::println("successfully connected to host!");
     return true;
 }
 
