@@ -7,7 +7,7 @@
 
 enum class GameStatus {
     Lobby,
-    Room,
+    RoomAsHost,
     RoomAsGuest,
     NotStarted,  // aka title screen
     Running,

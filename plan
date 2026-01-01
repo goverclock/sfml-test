@@ -1,18 +1,32 @@
 order by priority
 
+[] connection management
+	[x] when guest joins a room entry, it trys to establish a TCP connection to the host
+	[] once connected
+		[x] guest start sending periodical heartbeat(through the TCP connection) to host to indicate its signal strength
+		[] host updates guest signal strength with their heartbeat packets
+		[] host send guest list to the newly connected guest so they can initialize their room UI
+		[] host still sends periodical UDP broadcast to indicate its signal strength to all guests
+			[] if TCP connection is lost but UDP broadcast is still received, try re-connect
+	[] in the room
+		[] when host finds a new guest has joined the room, it tells all guests(through the TCP connection) about it so they can update their room UI
+		[] when a guest exits the room, it tells the host(TCP), then disconnect
+		[] when host finds a guest has exited, it tells all guests(TCP) about it so they can update their room UI
+		[] host clicks start game...
+
+[] coalesce all periodical work into one single thread
+
 [x] lobby screen to show all discovered rooms
 
 [x] click a room to join it
 
-[] host a room, show all connected guests
+[] room screen shows all connected guests
 
-[] remove linux proprietary headers, to compile it on windows
+[x] remove linux proprietary headers, to compile it on windows
 
 [] tell room name to guests with the broadcast message
 
-[] room screen to show all connected guests
-
-[] refactor lan with SFML network lib
+[x] refactor lan with SFML network lib
 
 [x] button class
 
@@ -25,19 +39,4 @@ order by priority
 [] lazy rendering if performance needed
 
 [] replace all render() into draw(), aka sf::Drawable
-
-
-Connection management:
-
-[x] when guest joins a room entry, it trys to establish a TCP connection to the host
-
-[] once connected
-	[] guest start sending periodical heartbeat(through the TCP connection) to host to indicate its signal strength
-	[] host still sends periodical UDP broadcast to indicate its signal strength to all guests
-	[] host send guest list to the newly connected guest so they can initialize their room UI
-
-[] in the room
-	[] when host finds a new guest has joined the room, it tells all guests(through the TCP connection) about it so they can update their room UI
-	[] when a guest exits the room, it tells the host(TCP), then disconnect
-	[] when host finds a guest has exited, it tells all guests(TCP) about it so they can update their room UI
 

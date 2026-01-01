@@ -6,6 +6,7 @@ namespace widget {
 Button::Button(float width, float height, std::string text)
     : mFont("resource/JetBrainsMono-Regular.ttf"), mText(mFont, text) {
     mRectangle.setFillColor(sf::Color::White);
+    mRectangle.setSize({380.f, 100.f});
     mText.setFillColor(sf::Color::Black);
     mText.setCharacterSize(50);
 };

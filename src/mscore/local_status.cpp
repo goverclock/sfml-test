@@ -5,20 +5,17 @@
 #include "ergonomics.hpp"
 #include "mscore/local_status.hpp"
 
-LocalStatus::LocalStatus() : mGameStatus(GameStatus::Lobby), mMineField() {
-    mGuestInfoList.push_back(
-        GuestInfo{.nickname = "TEST: me", .ip = "127.0.0.1"});
-}
+LocalStatus::LocalStatus() : mGameStatus(GameStatus::Lobby), mMineField() {}
 
 const GameStatus& LocalStatus::game_status() { return mGameStatus; }
 
 void LocalStatus::update() {
-    std::vector<lan::PeerInfo> peer_info_list = mLanPeer.get_peer_info_list();
-
     while (const std::optional lan_update = mLanPeer.poll_updates()) {
         switch (*lan_update) {
-            case lan::LanMessageUpdated::PeerInfoList:
+            case lan::LanMessageUpdated::PeerInfoList: {
                 mRoomEntryList.clear();
+                std::vector<lan::PeerInfo> peer_info_list =
+                    mLanPeer.get_peer_info_list();
                 for (const auto& pi : peer_info_list) {
                     mRoomEntryList.push_back(RoomEntry{
                         .name = pi.ip + "'s room",
@@ -27,8 +24,21 @@ void LocalStatus::update() {
                             static_cast<int>(pi.signal_strength) + 1});
                 }
                 break;
+            }
+            case lan::LanMessageUpdated::GuestInRoom: {
+                mGuestInfoList.clear();
+                std::vector<lan::ConnectedGuestInfo> connected_guest_list =
+                    mLanPeer.get_connected_guest_info_list();
+                for (const auto& cg : connected_guest_list) {
+                    mGuestInfoList.push_back(GuestInfo{
+                        .nickname = "guestnick",
+                        .ip = cg.guest_ip,
+                    });
+                }
+                break;
+            }
             default:
-                assert(false && "case default not implemented");
+                UNREACHABLE();
                 break;
         }
     }
@@ -41,12 +51,12 @@ const LocalStatus::RoomEntryList& LocalStatus::get_room_entry_list() {
 void LocalStatus::host_exit_room() {
     mGameStatus = GameStatus::Lobby;
     mLanPeer.stop_periodically_broadcast();
+    TODO();
+    // mLanPeer.disconnect_all_guests();
 }
 
-void LocalStatus::guest_exit_room() { TODO(); }
-
 void LocalStatus::create_room() {
-    mGameStatus = GameStatus::Room;
+    mGameStatus = GameStatus::RoomAsHost;
     mLanPeer.start_periodically_broadcast();
     mLanPeer.start_listen_guest();
 }
@@ -59,8 +69,12 @@ void LocalStatus::join_room(const RoomEntry& room_entry) {
     }
     mLanPeer.start_heartbeat_to_host();
     mGameStatus = GameStatus::RoomAsGuest;
+}
 
-    TODO();
+void LocalStatus::guest_exit_room() {
+    mLanPeer.stop_heartbeat_to_host();
+    mLanPeer.disconnect_from_host();
+    mGameStatus = GameStatus::Lobby;
 }
 
 void LocalStatus::start_discover_room() {

@@ -5,6 +5,7 @@
 
 #include "ergonomics.hpp"
 #include "lan/lan.hpp"
+#include "lan/packet.hpp"
 
 namespace lan {
 
@@ -65,7 +66,7 @@ void LanPeer::start_periodically_discover() {
                                  len, sender_ip->toString(), sender_port,
                                  data.data());
                     mLock.lock();
-                    mLastHeard[sender_ip->toString()] = std::time(nullptr);
+                    mRoomLastHeard[sender_ip->toString()] = std::time(nullptr);
                     mLock.unlock();
                     break;
                 case sf::Socket::Status::NotReady:
@@ -92,11 +93,23 @@ void LanPeer::start_listen_guest() {
             this->mIsListeningGuest.store(false);
         }
 
-        sf::TcpSocket guest;
         while (mIsListeningGuest.load()) {
-            if (listener.accept(guest) != sf::Socket::Status::Done)
+            sf::TcpSocket guest;
+            if (listener.accept(guest) != sf::Socket::Status::Done) {
                 std::println("fail to accept guest connection");
-            std::println("connected!");
+                continue;
+            }
+            mLock.lock();
+            std::println("guest connected! now {} guests in total",
+                         mConnectedGuestInfo.size() + 1);
+            sf::IpAddress guest_ip = *guest.getRemoteAddress();
+            assert(mConnectedGuestInfo.find(guest_ip.toString()) ==
+                   mConnectedGuestInfo.end());
+            mConnectedGuestInfo[guest_ip.toString()] =
+                ConnectedGuestInfo{.guest_ip = guest_ip.toString()};
+            mGuestConnections[guest_ip.toString()] = std::move(guest);
+            enque_updateL(LanMessageUpdated::GuestInRoom);
+            mLock.unlock();
         }
     });
     listen_guest_thread.detach();
@@ -111,19 +124,19 @@ void LanPeer::update_peer_info() {
     static constexpr int room_lost_timeout = 6 * BROADCAST_INTERVAL;
 
     // remove lost rooms
-    for (auto it = mLastHeard.begin(); it != mLastHeard.end();) {
+    for (auto it = mRoomLastHeard.begin(); it != mRoomLastHeard.end();) {
         if (std::difftime(now, it->second) > room_lost_timeout) {
             std::println("enque update for PeerInfo from {} to lost",
                          it->first);
             updated = true;
             mPeerInfoList.erase(it->first);
-            it = mLastHeard.erase(it);
+            it = mRoomLastHeard.erase(it);
         } else
             it++;
     }
 
     // update signal strength for rooms that isn't lost
-    for (const auto& lh : mLastHeard) {
+    for (const auto& lh : mRoomLastHeard) {
         PeerInfo expected{.ip = lh.first};
         int time_elapsed = std::difftime(now, lh.second);
         if (time_elapsed <= 2 * LanPeer::BROADCAST_INTERVAL)
@@ -151,6 +164,13 @@ std::vector<PeerInfo> LanPeer::get_peer_info_list() {
     return ret;
 }
 
+std::vector<ConnectedGuestInfo> LanPeer::get_connected_guest_info_list() {
+    std::lock_guard guard(mLock);
+    std::vector<ConnectedGuestInfo> ret;
+    for (const auto& p : mConnectedGuestInfo) ret.push_back(p.second);
+    return ret;
+}
+
 bool LanPeer::connect_to_host(std::string host_ip) {
     // TODO: for now we just block on the connect call, which means main thread
     // is freezed
@@ -165,6 +185,30 @@ bool LanPeer::connect_to_host(std::string host_ip) {
     return true;
 }
 
-void LanPeer::start_heartbeat_to_host() { TODO(); }
+void LanPeer::disconnect_from_host() {
+    std::println("disconnecting from host");
+    mToHostTcpSocket.disconnect();
+}
+
+void LanPeer::start_heartbeat_to_host() {
+    mIsHeartbeating.store(true);
+    std::thread heartbeat_thread([this] {
+        sf::Packet heartbeat_packet;
+        lan::packet::Heartbeat heartbeat{*sf::IpAddress::getLocalAddress(),
+                                         *mToHostTcpSocket.getRemoteAddress()};
+        heartbeat_packet << heartbeat;
+        while (mIsHeartbeating.load()) {
+            std::println("sending heartbeat packet to host: from {} to {}",
+                         heartbeat.from.toString(), heartbeat.to.toString());
+            assert(mToHostTcpSocket.isBlocking());
+            sf::Socket::Status status = mToHostTcpSocket.send(heartbeat_packet);
+            assert(status == sf::Socket::Status::Done);
+            sleep(1);
+        }
+    });
+    heartbeat_thread.detach();
+}
+
+void LanPeer::stop_heartbeat_to_host() { mIsHeartbeating.store(false); }
 
 };  // namespace lan

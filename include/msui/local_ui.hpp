@@ -29,16 +29,29 @@ class MineFieldUI : public Renderable {
     sf::Font mFont;
 };
 
-class RoomUI : public Renderable {
+class RoomAsHostUI : public Renderable {
    public:
-    RoomUI(LocalStatus& ls);
+    RoomAsHostUI(LocalStatus& ls);
     void render(sf::RenderWindow& w) override;
     void handle_click_event(sf::RenderWindow& w, sf::Event e) override;
 
    private:
     LocalStatus& mLocalStatus;
     widget::Button mExitRoomBtn;
-    widget::ListView<LocalStatus::GuestInfo> mListView;
+    widget::Button mStartGameBtn;
+    widget::ListView<LocalStatus::GuestInfo> mPlayerListView;
+};
+
+class RoomAsGuestUI : public Renderable {
+   public:
+    RoomAsGuestUI(LocalStatus& ls);
+    void render(sf::RenderWindow& w) override;
+    void handle_click_event(sf::RenderWindow& w, sf::Event e) override;
+
+   private:
+    LocalStatus& mLocalStatus;
+    widget::Button mExitRoomBtn;
+    widget::ListView<LocalStatus::GuestInfo> mPlayerListView;
 };
 
 class LobbyUI : public Renderable {
@@ -52,7 +65,7 @@ class LobbyUI : public Renderable {
     LocalStatus& mLocalStatus;
     // TODO: create a button class, which is also Renderable
     widget::Button mCreateRoomBtn;
-    widget::ListView<LocalStatus::RoomEntry> mListView;
+    widget::ListView<LocalStatus::RoomEntry> mRoomListView;
 };
 
 class GameTitleUI : public Renderable {

@@ -3,19 +3,19 @@
 #include "ergonomics.hpp"
 #include "msui/local_ui.hpp"
 
-RoomUI::RoomUI(LocalStatus& ls)
-    : mLocalStatus(ls), mListView(ls.get_guest_info_list()) {
-    mExitRoomBtn.set_size({380.f, 100.f});
-    mExitRoomBtn.set_fill_color(sf::Color::White);
+RoomAsHostUI::RoomAsHostUI(LocalStatus& ls)
+    : mLocalStatus(ls), mPlayerListView(ls.get_guest_info_list()) {
     mExitRoomBtn.set_text("Exit room");
     mExitRoomBtn.on_click([&] {
-        std::println("Room: clicked on Exit room");
-        // TODO: check we are host or guest, then call host/guest_exit_room
+        std::println("RoomAsHost: clicked on Exit room");
         mLocalStatus.host_exit_room();
     });
+
+    mStartGameBtn.set_text("Start game");
+    mStartGameBtn.on_click([&] { ls.start_game(10, 10); });  // TEST:
 }
 
-void RoomUI::render(sf::RenderWindow& w) {
+void RoomAsHostUI::render(sf::RenderWindow& w) {
     sf::Vector2u window_size = w.getSize();
     float x = window_size.x - mExitRoomBtn.get_size().x;
     float y = window_size.y - 200.f;
@@ -23,24 +23,52 @@ void RoomUI::render(sf::RenderWindow& w) {
     mExitRoomBtn.setPosition({x, y});
     w.draw(mExitRoomBtn);
 
-    mListView.setPosition({100.f, 100.f});
-    w.draw(mListView);
+    mStartGameBtn.setPosition({0.f, y});
+    w.draw(mStartGameBtn);
+
+    mPlayerListView.setPosition({100.f, 100.f});
+    w.draw(mPlayerListView);
 }
 
-void RoomUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
+void RoomAsHostUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
+    mExitRoomBtn.handle_click_event(w, e);
+    mStartGameBtn.handle_click_event(w, e);
+}
+
+RoomAsGuestUI::RoomAsGuestUI(LocalStatus& ls)
+    : mLocalStatus(ls), mPlayerListView(ls.get_guest_info_list()) {
+    mExitRoomBtn.set_text("Exit room");
+    mExitRoomBtn.on_click([&] {
+        std::println("RoomAsGuest: clicked on Exit room");
+        mLocalStatus.guest_exit_room();
+    });
+}
+
+void RoomAsGuestUI::render(sf::RenderWindow& w) {
+    sf::Vector2u window_size = w.getSize();
+    float x = window_size.x - mExitRoomBtn.get_size().x;
+    float y = window_size.y - 200.f;
+
+    mExitRoomBtn.setPosition({x, y});
+    w.draw(mExitRoomBtn);
+
+    mPlayerListView.setPosition({100.f, 100.f});
+    w.draw(mPlayerListView);
+}
+
+void RoomAsGuestUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
     mExitRoomBtn.handle_click_event(w, e);
 }
 
 LobbyUI::LobbyUI(LocalStatus& ls)
-    : mLocalStatus(ls), mListView(ls.get_room_entry_list()) {
-    mCreateRoomBtn.set_size({380.f, 100.f});
+    : mLocalStatus(ls), mRoomListView(ls.get_room_entry_list()) {
     mCreateRoomBtn.set_text("Create room");
     mCreateRoomBtn.on_click([&] {
         std::println("Lobby: clicked on Create room");
         mLocalStatus.create_room();
     });
 
-    mListView.on_item_click([&](const LocalStatus::RoomEntry& room_entry) {
+    mRoomListView.on_item_click([&](const LocalStatus::RoomEntry& room_entry) {
         ls.join_room(room_entry);
     });
 
@@ -57,13 +85,13 @@ void LobbyUI::render(sf::RenderWindow& w) {
     mCreateRoomBtn.setPosition({x, y});
     w.draw(mCreateRoomBtn);
 
-    mListView.setPosition({100.f, 100.f});
-    mListView.render(w);
+    mRoomListView.setPosition({100.f, 100.f});
+    mRoomListView.render(w);
 }
 
 void LobbyUI::handle_click_event(sf::RenderWindow& w, sf::Event e) {
     mCreateRoomBtn.handle_click_event(w, e);
-    mListView.handle_click_event(w, e);
+    mRoomListView.handle_click_event(w, e);
 }
 
 GameTitleUI::GameTitleUI(LocalStatus& ls) : mLocalStatus(ls) {
@@ -220,9 +248,13 @@ void LocalUI::render(sf::RenderWindow& w) {
                 std::println("to Lobby");
                 mStatusUISP.reset(new LobbyUI(mLocalStatus));
                 break;
-            case GameStatus::Room:
-                std::println("to Room");
-                mStatusUISP.reset(new RoomUI(mLocalStatus));
+            case GameStatus::RoomAsHost:
+                std::println("to RoomAsHost");
+                mStatusUISP.reset(new RoomAsHostUI(mLocalStatus));
+                break;
+            case GameStatus::RoomAsGuest:
+                std::println("to RoomAsGuest");
+                mStatusUISP.reset(new RoomAsGuestUI(mLocalStatus));
                 break;
             case GameStatus::NotStarted:
                 std::println("to GameTitle");
