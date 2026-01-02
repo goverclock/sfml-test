@@ -6,7 +6,9 @@ class GameClient {
    public:
     GameClient(size_t window_width, size_t window_height)
         : mLocalUI(mLocalStatus),
-          mWindow(sf::VideoMode({1920, 1080}), "GG games") {};
+          mWindow(
+              sf::VideoMode({(unsigned)window_width, (unsigned)window_height}),
+              "ggames client") {};
     void run();
 
    private:

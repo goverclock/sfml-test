@@ -6,8 +6,8 @@ namespace lan {
 namespace packet {
 
 struct Heartbeat {
-    sf::IpAddress from;
-    sf::IpAddress to;
+    sf::IpAddress from = sf::IpAddress::Broadcast;
+    sf::IpAddress to = sf::IpAddress::Broadcast;
 };
 
 sf::Packet& operator<<(sf::Packet& packet, const Heartbeat& heartbeat) {

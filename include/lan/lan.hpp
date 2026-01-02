@@ -11,18 +11,22 @@
 #include <unordered_set>
 #include <vector>
 
+#include "ergonomics.hpp"
+
 namespace lan {
 
 enum class LanMessageUpdated { PeerInfoList, GuestInRoom };
 
+enum class SignalStrength {
+    Weak,
+    Medium,
+    Strong,
+};
+
 // TODO: actually room info
 struct PeerInfo {
     std::string ip;  // port is unneeded since it's fixed to LanPeer::PORT
-    enum class SignalStrength {
-        Weak,
-        Medium,
-        Strong,
-    } signal_strength;
+    SignalStrength signal_strength;
 
     bool operator==(const PeerInfo& other) const {
         return ip == other.ip && signal_strength == other.signal_strength;
@@ -40,15 +44,36 @@ struct PeerInfo {
                 ret += "Weak";
                 break;
             default:
-                assert(false && "not implemented");
+                UNREACHABLE();
         }
         return ret;
     }
 };
 
 struct ConnectedGuestInfo {
-	std::string guest_ip;
-    std::string to_string() { return "Guest: " + guest_ip; }
+    std::string guest_ip;
+    SignalStrength signal_strength;
+    bool operator==(const ConnectedGuestInfo& other) const {
+        return guest_ip == other.guest_ip &&
+               signal_strength == other.signal_strength;
+    }
+    std::string to_string() {
+        std::string ret = "Guest: " + guest_ip;
+        switch (signal_strength) {
+            case SignalStrength::Strong:
+                ret += "Strong";
+                break;
+            case SignalStrength::Medium:
+                ret += "Medium";
+                break;
+            case SignalStrength::Weak:
+                ret += "Weak";
+                break;
+            default:
+                UNREACHABLE();
+        }
+        return ret;
+    }
 };
 
 class LanPeer {
@@ -90,8 +115,10 @@ class LanPeer {
     std::unordered_map<std::string, std::time_t> mRoomLastHeard;
 
     sf::TcpSocket mToHostTcpSocket;
+    void update_connected_guest_info();
     std::map<std::string, ConnectedGuestInfo> mConnectedGuestInfo;
     std::unordered_map<std::string, sf::TcpSocket> mGuestConnections;
+    std::unordered_map<std::string, std::time_t> mGuestLastHeatbeat;
 
     std::atomic<bool> mIsBroadcasting = false;
     std::atomic<bool> mIsListeningGuest = false;

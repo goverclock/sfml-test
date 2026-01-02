@@ -4,7 +4,7 @@ order by priority
 	[x] when guest joins a room entry, it trys to establish a TCP connection to the host
 	[] once connected
 		[x] guest start sending periodical heartbeat(through the TCP connection) to host to indicate its signal strength
-		[] host updates guest signal strength with their heartbeat packets
+		[x] host updates guest signal strength with their heartbeat packets
 		[] host send guest list to the newly connected guest so they can initialize their room UI
 		[] host still sends periodical UDP broadcast to indicate its signal strength to all guests
 			[] if TCP connection is lost but UDP broadcast is still received, try re-connect
@@ -12,9 +12,12 @@ order by priority
 		[] when host finds a new guest has joined the room, it tells all guests(through the TCP connection) about it so they can update their room UI
 		[] when a guest exits the room, it tells the host(TCP), then disconnect
 		[] when host finds a guest has exited, it tells all guests(TCP) about it so they can update their room UI
+		[] when host exit(thus dismiss) the room, notify all guests to return to lobby
 		[] host clicks start game...
 
 [] coalesce all periodical work into one single thread
+
+[] stop all threads gracefully so there is no weird error message when program quits
 
 [x] lobby screen to show all discovered rooms
 
@@ -29,8 +32,6 @@ order by priority
 [x] refactor lan with SFML network lib
 
 [x] button class
-
-[] host send a message to indicate the room has dismissed
 
 [x] list view class, maybe a widget lib
 

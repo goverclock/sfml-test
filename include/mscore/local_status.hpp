@@ -50,7 +50,11 @@ class LocalStatus {
     using GuestInfo = struct GuestInfo {
         std::string nickname;
         std::string ip;
-        std::string to_string() const { return nickname + " " + ip; }
+        int signal_strength;
+        std::string to_string() const {
+            return nickname + " " + ip + " " +
+                   std::string(signal_strength, '|');
+        }
     };
     using GuestInfoList = std::vector<GuestInfo>;
     const GuestInfoList& get_guest_info_list();

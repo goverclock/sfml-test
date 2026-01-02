@@ -33,7 +33,8 @@ void LocalStatus::update() {
                     mGuestInfoList.push_back(GuestInfo{
                         .nickname = "guestnick",
                         .ip = cg.guest_ip,
-                    });
+                        .signal_strength =
+                            static_cast<int>(cg.signal_strength) + 1});
                 }
                 break;
             }
