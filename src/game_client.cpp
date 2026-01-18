@@ -1,34 +1,18 @@
+#include <chrono>
 #include <print>
+#include <thread>
 
 #include "game_client.hpp"
+#include "scene_manager.hpp"
 
 void GameClient::run() {
-    bool game_running = true;
-
-    // handle user input, e.g. click, keyboard input
-    static const auto on_mouse_button_pressed =
-        [&](const sf::Event::MouseButtonPressed& mouse_button_pressed) {
-            // TODO: should only pass mouse relevant event
-            mLocalUI.handle_click_event(mWindow, mouse_button_pressed);
-        };
-    static const auto on_key_pressed =
-        [&](const sf::Event::KeyPressed& key_pressed) {
-            if (key_pressed.scancode == sf::Keyboard::Scancode::Q) {
-                mWindow.close();
-                game_running = false;
-            }
-        };
-    while (game_running) {
-        mLocalStatus.update();  // TODO: period, frame rate?
-        if (mWindow.isOpen()) {
-            mWindow.handleEvents(
-                [&](const sf::Event::Closed) { mWindow.close(); },
-                on_key_pressed, on_mouse_button_pressed);
-            mWindow.clear(sf::Color(55, 55, 55, 0));
-            mLocalUI.render(mWindow);
-            mWindow.display();
-        } else
-            game_running = false;
+    while (mSceneManager.is_window_open()) {
+        mLocalStatus.update();
+        mSceneManager.handle_window_event();
+        mSceneManager.display();
+        // TODO: maybe we can do better, like only loop once when needed
+        std::this_thread::sleep_for(
+            std::chrono::milliseconds(16));  // e.g. 60 FPS
     }
 
     std::println("exiting, normally");

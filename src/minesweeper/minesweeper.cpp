@@ -1,6 +1,17 @@
+#include <print>
+
+#include "minesweeper/minesweeper.h"
 #include "raylib.h"
 
-int main() {
+namespace ms {
+
+void run(const std::vector<PlayerInfo>& players_info) {
+    std::println("got player info:");
+    int ind = 0;
+    for (const PlayerInfo& pi : players_info) {
+        std::println("[{}] {} {}", ++ind, pi.nickname, pi.ip);
+    }
+
     const int width = 800;
     const int height = 450;
 
@@ -14,6 +25,6 @@ int main() {
         EndDrawing();
     }
     CloseWindow();
-
-    return 0;
 }
+
+};  // namespace ms

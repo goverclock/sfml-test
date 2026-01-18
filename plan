@@ -23,7 +23,7 @@ order by priority
 
 [x] click a room to join it
 
-[] room screen shows all connected guests
+[x] room screen shows all connected guests
 
 [x] remove linux proprietary headers, to compile it on windows
 
@@ -39,5 +39,5 @@ order by priority
 
 [] lazy rendering if performance needed
 
-[] replace all render() into draw(), aka sf::Drawable
+[x] replace all render() into draw(), aka sf::Drawable
 

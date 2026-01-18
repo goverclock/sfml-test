@@ -1,6 +1,12 @@
 add_executable(lobby
 	lobby.cpp
 	../src/game_client.cpp
+	../src/scene_manager.cpp
+)
+target_link_libraries(lobby PRIVATE
+	mscore
+	lan
+	widget
 )
 
 if(WIN32)
@@ -8,14 +14,19 @@ if(WIN32)
 	# see https://stackoverflow.com/questions/78452682/stdprintln-print-not-working-in-winlibs-mingw-gcc-14-1
 	target_link_libraries(lobby PRIVATE "-lstdc++exp")
 endif()
-target_link_libraries(lobby PRIVATE
-	msui
+
+add_executable(game_minesweeper
+	game_minesweeper.cpp
+)
+target_link_libraries(game_minesweeper PRIVATE
+	minesweeper
 )
 
-add_executable(minesweeper
-	minesweeper.cpp
-)
-target_link_libraries(minesweeper PRIVATE
-	raylib
-)
-
+# add_executable(text_debug
+# 	text_debug.cpp
+# 	../src/scene_manager.cpp
+# )
+# target_link_libraries(text_debug PRIVATE
+# 	SFML::Graphics
+# 	widget
+# )

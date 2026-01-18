@@ -4,7 +4,7 @@
 namespace widget {
 
 Button::Button(float width, float height, std::string text)
-    : mFont("resource/JetBrainsMono-Regular.ttf"), mText(mFont, text) {
+    : mText(defaultWidgetFont, text) {
     mRectangle.setFillColor(sf::Color::White);
     mRectangle.setSize({380.f, 100.f});
     mText.setFillColor(sf::Color::Black);
@@ -23,9 +23,7 @@ void Button::set_fill_color(sf::Color color) { mRectangle.setFillColor(color); }
 
 void Button::set_text(std::string text) { mText.setString(text); }
 
-void Button::render(sf::RenderWindow& w) { w.draw(*this); }
-
-void Button::handle_click_event(sf::RenderWindow& w, sf::Event e) {
+bool Button::handle_event(sf::RenderWindow& w, sf::Event e) {
     const sf::Event::MouseButtonPressed* mouse_button_pressed =
         e.getIf<sf::Event::MouseButtonPressed>();
     assert(mouse_button_pressed);
@@ -39,7 +37,9 @@ void Button::handle_click_event(sf::RenderWindow& w, sf::Event e) {
         std::println("Button({}) clicked",
                      static_cast<std::string>(mText.getString()));
         if (mClickCallbackFunc) mClickCallbackFunc();
+        return true;
     }
+    return false;
 }
 
 void Button::draw(sf::RenderTarget& target, sf::RenderStates states) const {

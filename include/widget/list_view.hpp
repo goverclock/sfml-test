@@ -3,7 +3,7 @@
 #include <functional>
 #include <vector>
 
-#include "renderable.hpp"
+#include "widget/widget.hpp"
 
 namespace widget {
 
@@ -12,26 +12,21 @@ concept HasToString = requires(const T& obj) {
     { obj.to_string() } -> std::same_as<std::string>;
 };
 template <HasToString T>
-class ListView : public Renderable,
-                 public sf::Transformable,
-                 public sf::Drawable {
+class ListView : public Widget {
    public:
     ListView(const std::vector<T>& item_list);
 
     void on_item_click(std::function<void(const T&)>);
 
-    // Renderable
-    void render(sf::RenderWindow& w) override;
-    void handle_click_event(sf::RenderWindow& w, sf::Event e) override;
-
+    // Widget
+    bool handle_event(sf::RenderWindow& w, sf::Event e) override;
     // Drawable
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
    private:
     const std::vector<T>& mItemList;
     sf::RectangleShape mEntryRect;
-	sf::Text mEntryText;
-	sf::Font mFont;
+    sf::Text mEntryText;
     std::function<void(const T&)> mClickItemCallbackFunc;
 };
 

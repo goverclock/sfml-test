@@ -1,0 +1,13 @@
+# minesweeper
+
+[] render, handle click event
+
+[] screens(scenes)
+	[] settings
+	[] in game
+	[] summary
+
+[] load resources, we want images not just squares
+
+[] network
+

@@ -27,8 +27,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(raylib)
 
 add_subdirectory(src/mscore)
-add_subdirectory(src/msui)
 add_subdirectory(src/lan)
 add_subdirectory(src/widget)
+add_subdirectory(src/minesweeper)
 add_subdirectory(apps)
 

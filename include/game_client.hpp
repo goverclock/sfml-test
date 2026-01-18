@@ -1,20 +1,13 @@
 #pragma once
 #include "mscore/local_status.hpp"
-#include "msui/local_ui.hpp"
+#include "scene_manager.hpp"
 
 class GameClient {
    public:
-    GameClient(size_t window_width, size_t window_height)
-        : mLocalUI(mLocalStatus),
-          mWindow(
-              sf::VideoMode({(unsigned)window_width, (unsigned)window_height}),
-              "ggames client") {};
+    GameClient() : mSceneManager(mLocalStatus) {}
     void run();
 
    private:
-    void handle_input();
-    void render();
-    LocalUI mLocalUI;
     LocalStatus mLocalStatus;
-    sf::RenderWindow mWindow;
+    SceneManager mSceneManager;
 };
