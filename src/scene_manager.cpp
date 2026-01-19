@@ -72,9 +72,10 @@ SceneRoomAsHost::SceneRoomAsHost(LocalStatus& local_status)
         mLocalStatus.host_exit_room();
     });
     mStartGameBtn.set_text("Start game");
-    mStartGameBtn.on_click([&] { mLocalStatus.start_game(10, 10); });  // TEST:
+    mStartGameBtn.on_click([&] { mLocalStatus.start_game(); });
     Scene::register_widget(mExitRoomBtn);
     Scene::register_widget(mStartGameBtn);
+    Scene::register_widget(mPlayerListView);
 }
 
 SceneRoomAsHost::~SceneRoomAsHost() {}

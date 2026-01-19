@@ -49,7 +49,8 @@ void LanPeer::start_periodically_discover() {
         sf::UdpSocket socket;
         socket.setBlocking(false);
         if (socket.bind(PORT) != sf::Socket::Status::Done) {
-            std::println("fail to UDP bind port {}", PORT);
+            std::println("fail to UDP bind port {}",
+                         PORT);  // TODO: try to bind again later
             mIsDiscovering.store(false);
         }
 
@@ -238,6 +239,15 @@ void LanPeer::start_listen_guest() {
 
 void LanPeer::stop_listen_guest() { mIsListeningGuest.store(false); }
 
+void LanPeer::disconnect_all_guests() {
+    mGuestLastHeatbeat.clear();
+    for (auto& gc : mGuestConnections) {
+        std::string guest_ip = gc.first;
+        mGuestConnections[guest_ip].disconnect();
+    }
+    mGuestConnections.clear();
+}
+
 void LanPeer::update_peer_info() {
     std::lock_guard guard(mLock);
     std::time_t now = std::time(nullptr);
@@ -299,11 +309,12 @@ bool LanPeer::connect_to_host(std::string host_ip) {
         mToHostTcpSocket.connect(*sf::IpAddress::resolve(host_ip), PORT);
     std::println("trying to connect to {}:{}, got status {}", host_ip, PORT,
                  static_cast<int>(status));
-    assert(status == sf::Socket::Status::Done);
-
-    //    TODO();
-    std::println("successfully connected to host!");
-    return true;
+    if (status == sf::Socket::Status::Done) {
+        std::println("successfully connected to host!");
+        return true;
+    }
+    std::println("fail to connected to host!");
+    return false;
 }
 
 void LanPeer::disconnect_from_host() {

@@ -86,6 +86,8 @@ class LanPeer {
     void stop_periodically_broadcast();
     void start_listen_guest();
     void stop_listen_guest();
+	void disconnect_all_guests();
+    std::vector<ConnectedGuestInfo> get_connected_guest_info_list();
 
     // as guest
     void start_periodically_discover();
@@ -97,7 +99,6 @@ class LanPeer {
 
     std::optional<LanMessageUpdated> poll_updates();
     std::vector<PeerInfo> get_peer_info_list();
-    std::vector<ConnectedGuestInfo> get_connected_guest_info_list();
 
    private:
     constexpr static int PORT = 6969;

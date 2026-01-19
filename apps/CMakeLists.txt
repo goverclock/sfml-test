@@ -8,7 +8,6 @@ target_link_libraries(lobby PRIVATE
 	lan
 	widget
 )
-
 if(WIN32)
 	# to make std::println work on windows
 	# see https://stackoverflow.com/questions/78452682/stdprintln-print-not-working-in-winlibs-mingw-gcc-14-1

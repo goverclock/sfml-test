@@ -2,7 +2,6 @@
 
 #include <string>
 
-#include "../mine_cell.hpp"
 #include "lan/lan.hpp"
 
 enum class GameStatus {
@@ -39,7 +38,7 @@ class LocalStatus {
 
     // network, in lobby
     const RoomEntryList& get_room_entry_list();
-    void create_room(/* TODO: game type, e.g. minesweeprt, geowartry...*/);
+    void create_room();
     void join_room(const RoomEntry& room_entry);
     void start_discover_room();
     void stop_discover_room();
@@ -59,22 +58,12 @@ class LocalStatus {
     using GuestInfoList = std::vector<GuestInfo>;
     const GuestInfoList& get_guest_info_list();
 
-    // minesweeper
-    void start_game(size_t row, size_t col);
-    const MineCell& get_cell(size_t row, size_t col);
-    const MineField& get_field();
-    size_t field_rows();
-    size_t field_cols();
-    void reveal_cell(size_t row, size_t col);
+    void start_game();
 
    private:
     // network
     lan::LanPeer mLanPeer;
     RoomEntryList mRoomEntryList;
     GuestInfoList mGuestInfoList;
-    // minesweeper
     GameStatus mGameStatus;
-    size_t mRows;
-    size_t mCols;
-    MineField mMineField;
 };
