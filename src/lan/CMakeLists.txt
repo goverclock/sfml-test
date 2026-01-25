@@ -1,4 +1,8 @@
-add_library(lan lan.cpp)
+add_library(lan
+	lan.cpp
+	guest_connection.cpp
+	packet.cpp
+)
 
 target_link_libraries(lan PUBLIC SFML::Network)
 

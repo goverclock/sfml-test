@@ -12,11 +12,11 @@ const GameStatus& LocalStatus::game_status() { return mGameStatus; }
 void LocalStatus::update() {
     while (const std::optional lan_update = mLanPeer.poll_updates()) {
         switch (*lan_update) {
-            case lan::LanMessageUpdated::PeerInfoList: {
+            case lan::LanMessageUpdated::RoomInfoList: {
                 mRoomEntryList.clear();
-                std::vector<lan::PeerInfo> peer_info_list =
-                    mLanPeer.get_peer_info_list();
-                for (const auto& pi : peer_info_list) {
+                std::vector<lan::RoomInfo> room_info_list =
+                    mLanPeer.get_room_info_list();
+                for (const auto& pi : room_info_list) {
                     mRoomEntryList.push_back(RoomEntry{
                         .name = pi.ip + "'s room",
                         .ip = pi.ip,
@@ -27,14 +27,14 @@ void LocalStatus::update() {
             }
             case lan::LanMessageUpdated::GuestInRoom: {
                 mGuestInfoList.clear();
-                std::vector<lan::ConnectedGuestInfo> connected_guest_list =
-                    mLanPeer.get_connected_guest_info_list();
-                for (const auto& cg : connected_guest_list) {
+                const std::unordered_map<std::string, lan::GuestConnection>&
+                    guest_conn_list = mLanPeer.get_connected_guest_info_list();
+                for (const auto& gc : guest_conn_list) {
                     mGuestInfoList.push_back(GuestInfo{
                         .nickname = "guestnick",
-                        .ip = cg.guest_ip,
+                        .ip = gc.second.guest_ip(),
                         .signal_strength =
-                            static_cast<int>(cg.signal_strength) + 1});
+                            static_cast<int>(gc.second.signal_strength()) + 1});
                 }
                 break;
             }
@@ -52,7 +52,7 @@ const LocalStatus::RoomEntryList& LocalStatus::get_room_entry_list() {
 void LocalStatus::host_exit_room() {
     mGameStatus = GameStatus::Lobby;
     mLanPeer.stop_periodically_broadcast();
-	mLanPeer.stop_listen_guest();
+    mLanPeer.stop_listen_guest();
     mLanPeer.disconnect_all_guests();
 }
 

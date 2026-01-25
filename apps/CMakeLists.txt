@@ -14,12 +14,12 @@ if(WIN32)
 	target_link_libraries(lobby PRIVATE "-lstdc++exp")
 endif()
 
-add_executable(game_minesweeper
-	game_minesweeper.cpp
-)
-target_link_libraries(game_minesweeper PRIVATE
-	minesweeper
-)
+# add_executable(game_minesweeper
+# 	game_minesweeper.cpp
+# )
+# target_link_libraries(game_minesweeper PRIVATE
+# 	minesweeper
+# )
 
 # add_executable(text_debug
 # 	text_debug.cpp

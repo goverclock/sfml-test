@@ -18,6 +18,7 @@ std::optional<LanMessageUpdated> LanPeer::poll_updates() {
 }
 
 void LanPeer::enque_updateL(LanMessageUpdated message) {
+    assert(!mLock.try_lock());
     mUpdatedSet.insert(message);
 }
 
@@ -71,7 +72,7 @@ void LanPeer::start_periodically_discover() {
                     mLock.unlock();
                     break;
                 case sf::Socket::Status::NotReady:
-                    update_peer_info();
+                    update_room_info();
                     sf::sleep(sf::seconds(1.f));
                     break;
                 default:
@@ -85,62 +86,6 @@ void LanPeer::start_periodically_discover() {
 
 void LanPeer::stop_periodically_discover() { mIsDiscovering.store(false); }
 
-void LanPeer::update_connected_guest_info() {
-    std::lock_guard guard(mLock);
-    std::time_t now = std::time(nullptr);
-    bool updated = false;
-    static constexpr int guest_lost_timeout = 5;
-
-    // remove lost guests
-    for (auto it = mGuestLastHeatbeat.begin();
-         it != mGuestLastHeatbeat.end();) {
-        bool is_lost = false;
-        if (std::difftime(now, it->second) > guest_lost_timeout) {
-            is_lost = true;
-            std::println(
-                "enque update for ConnectedGuestInfo from {} to lost(no "
-                "heartbeat)",
-                it->first);
-        }
-        if (!mGuestConnections[it->first].getRemoteAddress()) {
-            is_lost = true;
-            std::println(
-                "enque update for ConnectedGuestInfo from {} to "
-                "lost(disconnected)",
-                it->first);
-        }
-
-        if (is_lost) {
-            updated = true;
-            mGuestConnections[it->first].disconnect();
-            mConnectedGuestInfo.erase(it->first);
-            it = mGuestLastHeatbeat.erase(it);
-        } else
-            it++;
-    }
-
-    for (const auto& lhb : mGuestLastHeatbeat) {
-        ConnectedGuestInfo expected{.guest_ip = lhb.first};
-        int time_elapsed = std::difftime(now, lhb.second);
-        if (time_elapsed <= 2)
-            expected.signal_strength = SignalStrength::Strong;
-        else if (time_elapsed <= 4)
-            expected.signal_strength = SignalStrength::Medium;
-        else if (time_elapsed <= guest_lost_timeout)
-            expected.signal_strength = SignalStrength::Weak;
-
-        if (mConnectedGuestInfo[lhb.first] != expected) {
-            std::println("enque update for ConnectedGuestInfo from {} to {}",
-                         mConnectedGuestInfo[lhb.first].to_string(),
-                         expected.to_string());
-            mConnectedGuestInfo[lhb.first] = expected;
-            updated = true;
-        }
-    }
-
-    if (updated) enque_updateL(LanMessageUpdated::GuestInRoom);
-}
-
 void LanPeer::start_listen_guest() {
     mIsListeningGuest.store(true);
     std::thread listen_guest_thread([this] {
@@ -149,89 +94,33 @@ void LanPeer::start_listen_guest() {
             std::println("fail to TCP listen on port {}", PORT);
             this->mIsListeningGuest.store(false);
         }
-        listener.setBlocking(false);
         sf::SocketSelector selector;
+        selector.add(listener);
 
         while (mIsListeningGuest.load()) {
-            bool just_updated = false;
             // new guest connection ?
             sf::TcpSocket guest;
-            const sf::Socket::Status status = listener.accept(guest);
-            switch (status) {
-                case sf::Socket::Status::Done: {
-                    mLock.lock();
-                    std::println("guest connected! now {} guests in total ",
-                                 mConnectedGuestInfo.size() + 1);
-                    sf::IpAddress guest_ip = *guest.getRemoteAddress();
-                    assert(mConnectedGuestInfo.find(guest_ip.toString()) ==
-                           mConnectedGuestInfo.end());
-                    mGuestLastHeatbeat[guest_ip.toString()] =
-                        std::time(nullptr);
-                    mGuestConnections[guest_ip.toString()] = std::move(guest);
-                    selector.add(mGuestConnections[guest_ip.toString()]);
-                    mLock.unlock();
-                    just_updated = true;
-                    break;
-                }
-                case sf::Socket::Status::NotReady:
-                    break;
-                default:
-                    std::println("listen guest status: {} ",
-                                 static_cast<int>(status));
-            }
-
-            while (selector.wait(sf::seconds(0.001f))) {
-                just_updated = true;
-                // new guest packet?
-                std::time_t now = std::time(nullptr);
-                for (auto& gc : mGuestConnections) {
-                    if (!selector.isReady(gc.second)) continue;
-
-                    sf::Packet packet;
-                    auto status = gc.second.receive(packet);
-                    switch (status) {
-                        case sf::Socket::Status::Done: {
-                            packet::Heartbeat hb;
-                            packet >> hb;
-                            std::println("receiving heartbeatpacket : {}->{} ",
-                                         hb.from.toString(), hb.to.toString());
-                            mLock.lock();
-                            mGuestLastHeatbeat[gc.first] = now;
-                            mLock.unlock();
-                            break;
-                        }
-                        case sf::Socket::Status::Disconnected:
-                            std::println("guest disconnected: {}, removing",
-                                         gc.first);
-                            gc.second.disconnect();
-                            selector.remove(gc.second);
-                            break;
-                        default:
-                            std::println("fail to receive packet: {}",
-                                         static_cast<int>(status));
+            if (selector.wait(sf::seconds(1.0f))) {
+                // no need to call isReady since we added only the listener
+                const sf::Socket::Status status = listener.accept(guest);
+                switch (status) {
+                    case sf::Socket::Status::Done: {
+                        std::println("new guest connected!: {} ",
+                                     guest.getRemoteAddress()->toString());
+                        mGuestConnectionManager.add_connection(
+                            std::move(guest));
+                        break;
                     }
+                    case sf::Socket::Status::NotReady:
+                        break;
+                    default:
+                        std::println("listen guest failed with status: {} ",
+                                     static_cast<int>(status));
                 }
-            }
-
-            // if we just receive some updated from remote, some more might be
-            // waiting to be received, process them immediately. we only call
-            // update_connected_guest_info when last selector.wait() returns
-            // false
-            if (!just_updated) {
+            } else
+                // only update guest info when no new guest connection is
+                // coming, i.e. when selector.wait() returns false
                 update_connected_guest_info();
-                // erase disconnected guests
-                for (auto it = mGuestConnections.begin();
-                     it != mGuestConnections.end();) {
-                    if (!it->second.getRemoteAddress()) {
-                        std::println(
-                            "removing no heartbeat/disconnected guest: {}",
-                            it->first);
-                        selector.remove(it->second);
-                        it = mGuestConnections.erase(it);
-                    } else
-                        it++;
-                }
-            }
         }
     });
     listen_guest_thread.detach();
@@ -240,15 +129,21 @@ void LanPeer::start_listen_guest() {
 void LanPeer::stop_listen_guest() { mIsListeningGuest.store(false); }
 
 void LanPeer::disconnect_all_guests() {
-    mGuestLastHeatbeat.clear();
-    for (auto& gc : mGuestConnections) {
-        std::string guest_ip = gc.first;
-        mGuestConnections[guest_ip].disconnect();
-    }
-    mGuestConnections.clear();
+    mGuestConnectionManager.disconnect_all();
 }
 
-void LanPeer::update_peer_info() {
+void LanPeer::update_connected_guest_info() {
+    std::lock_guard guard(mLock);
+    if (mGuestConnectionManager.check_guest_info_update())
+        enque_updateL(LanMessageUpdated::GuestInRoom);
+}
+
+const std::unordered_map<std::string, GuestConnection>&
+LanPeer::get_connected_guest_info_list() {
+    return mGuestConnectionManager.guest_connection_list();
+}
+
+void LanPeer::update_room_info() {
     std::lock_guard guard(mLock);
     std::time_t now = std::time(nullptr);
     bool updated = false;
@@ -257,10 +152,10 @@ void LanPeer::update_peer_info() {
     // remove lost rooms
     for (auto it = mRoomLastHeard.begin(); it != mRoomLastHeard.end();) {
         if (std::difftime(now, it->second) > room_lost_timeout) {
-            std::println("enque update for PeerInfo from {} to lost",
+            std::println("enque update for RoomInfo from {} to lost",
                          it->first);
             updated = true;
-            mPeerInfoList.erase(it->first);
+            mRoomInfoList.erase(it->first);
             it = mRoomLastHeard.erase(it);
         } else
             it++;
@@ -268,7 +163,7 @@ void LanPeer::update_peer_info() {
 
     // update signal strength for rooms that isn't lost
     for (const auto& lh : mRoomLastHeard) {
-        PeerInfo expected{.ip = lh.first};
+        RoomInfo expected{.ip = lh.first};
         int time_elapsed = std::difftime(now, lh.second);
         if (time_elapsed <= 2 * LanPeer::BROADCAST_INTERVAL)
             expected.signal_strength = SignalStrength::Strong;
@@ -277,28 +172,21 @@ void LanPeer::update_peer_info() {
         else if (time_elapsed <= room_lost_timeout)
             expected.signal_strength = SignalStrength::Weak;
 
-        if (mPeerInfoList[lh.first] != expected) {
-            std::println("enque update for PeerInfo from {} to {}",
-                         mPeerInfoList[lh.first].to_string(),
+        if (mRoomInfoList[lh.first] != expected) {
+            std::println("enque update for RoomInfo from {} to {}",
+                         mRoomInfoList[lh.first].to_string(),
                          expected.to_string());
-            mPeerInfoList[lh.first] = expected;
+            mRoomInfoList[lh.first] = expected;
             updated = true;
         }
     }
-    if (updated) enque_updateL(LanMessageUpdated::PeerInfoList);
+    if (updated) enque_updateL(LanMessageUpdated::RoomInfoList);
 }
 
-std::vector<PeerInfo> LanPeer::get_peer_info_list() {
+std::vector<RoomInfo> LanPeer::get_room_info_list() {
     std::lock_guard guard(mLock);
-    std::vector<PeerInfo> ret;
-    for (const auto& p : mPeerInfoList) ret.push_back(p.second);
-    return ret;
-}
-
-std::vector<ConnectedGuestInfo> LanPeer::get_connected_guest_info_list() {
-    std::lock_guard guard(mLock);
-    std::vector<ConnectedGuestInfo> ret;
-    for (const auto& p : mConnectedGuestInfo) ret.push_back(p.second);
+    std::vector<RoomInfo> ret;
+    for (const auto& p : mRoomInfoList) ret.push_back(p.second);
     return ret;
 }
 
@@ -334,7 +222,10 @@ void LanPeer::start_heartbeat_to_host() {
                          heartbeat.from.toString(), heartbeat.to.toString());
             assert(mToHostTcpSocket.isBlocking());
             sf::Socket::Status status = mToHostTcpSocket.send(heartbeat_packet);
-            assert(status == sf::Socket::Status::Done);
+            assert(
+                status ==
+                sf::Socket::Status::Done);  // TODO: host is lost,
+                                            // guest exit room, use enque update
             sf::sleep(sf::seconds(1.f));
         }
     });

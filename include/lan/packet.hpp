@@ -2,7 +2,6 @@
 #include <SFML/Network.hpp>
 
 namespace lan {
-
 namespace packet {
 
 struct Heartbeat {
@@ -10,18 +9,16 @@ struct Heartbeat {
     sf::IpAddress to = sf::IpAddress::Broadcast;
 };
 
-sf::Packet& operator<<(sf::Packet& packet, const Heartbeat& heartbeat) {
-    return packet << heartbeat.from.toString() << heartbeat.to.toString();
-}
+sf::Packet& operator<<(sf::Packet& packet, const Heartbeat& heartbeat);
+sf::Packet& operator>>(sf::Packet& packet, Heartbeat& heartbeat);
 
-sf::Packet& operator>>(sf::Packet& packet, Heartbeat& heartbeat) {
-    std::string from, to;
-    packet >> from >> to;
-    heartbeat.from = *sf::IpAddress::resolve(from);
-    heartbeat.to = *sf::IpAddress::resolve(to);
-    return packet;
-}
+struct GuestsInRoom {
+    std::string nickname;
+    int signal_strength;
+};
+
+sf::Packet& operator<<(sf::Packet& packet, const GuestsInRoom& gir);
+sf::Packet& operator>>(sf::Packet& packet, GuestsInRoom& gir);
 
 };  // namespace packet
-
 };  // namespace lan

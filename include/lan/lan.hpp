@@ -12,53 +12,22 @@
 #include <vector>
 
 #include "ergonomics.hpp"
+#include "guest_connection.hpp"
 
 namespace lan {
 
-enum class LanMessageUpdated { PeerInfoList, GuestInRoom };
-
-enum class SignalStrength {
-    Weak,
-    Medium,
-    Strong,
-};
+enum class LanMessageUpdated { RoomInfoList, GuestInRoom };
 
 // TODO: actually room info
-struct PeerInfo {
+struct RoomInfo {
     std::string ip;  // port is unneeded since it's fixed to LanPeer::PORT
     SignalStrength signal_strength;
 
-    bool operator==(const PeerInfo& other) const {
+    bool operator==(const RoomInfo& other) const {
         return ip == other.ip && signal_strength == other.signal_strength;
     }
     std::string to_string() {
         std::string ret = ip + ":";
-        switch (signal_strength) {
-            case SignalStrength::Strong:
-                ret += "Strong";
-                break;
-            case SignalStrength::Medium:
-                ret += "Medium";
-                break;
-            case SignalStrength::Weak:
-                ret += "Weak";
-                break;
-            default:
-                UNREACHABLE();
-        }
-        return ret;
-    }
-};
-
-struct ConnectedGuestInfo {
-    std::string guest_ip;
-    SignalStrength signal_strength;
-    bool operator==(const ConnectedGuestInfo& other) const {
-        return guest_ip == other.guest_ip &&
-               signal_strength == other.signal_strength;
-    }
-    std::string to_string() {
-        std::string ret = "Guest: " + guest_ip;
         switch (signal_strength) {
             case SignalStrength::Strong:
                 ret += "Strong";
@@ -86,8 +55,9 @@ class LanPeer {
     void stop_periodically_broadcast();
     void start_listen_guest();
     void stop_listen_guest();
-	void disconnect_all_guests();
-    std::vector<ConnectedGuestInfo> get_connected_guest_info_list();
+    void disconnect_all_guests();
+    const std::unordered_map<std::string, GuestConnection>&
+    get_connected_guest_info_list();
 
     // as guest
     void start_periodically_discover();
@@ -98,7 +68,7 @@ class LanPeer {
     void stop_heartbeat_to_host();
 
     std::optional<LanMessageUpdated> poll_updates();
-    std::vector<PeerInfo> get_peer_info_list();
+    std::vector<RoomInfo> get_room_info_list();
 
    private:
     constexpr static int PORT = 6969;
@@ -108,18 +78,15 @@ class LanPeer {
     void enque_updateL(LanMessageUpdated message);
     std::unordered_set<LanMessageUpdated> mUpdatedSet;
 
-    // TODO: actually just room info, change these names
-    void update_peer_info();
-    // TODO: change to sf::IpAddr, PeerInfo
-    std::map<std::string, PeerInfo> mPeerInfoList;
+    void update_room_info();
+    // TODO: change to sf::IpAddr, RoomInfo
+    std::map<std::string, RoomInfo> mRoomInfoList;
     // TODO: change to sf::IpAddr, std::time_t
     std::unordered_map<std::string, std::time_t> mRoomLastHeard;
 
     sf::TcpSocket mToHostTcpSocket;
     void update_connected_guest_info();
-    std::map<std::string, ConnectedGuestInfo> mConnectedGuestInfo;
-    std::unordered_map<std::string, sf::TcpSocket> mGuestConnections;
-    std::unordered_map<std::string, std::time_t> mGuestLastHeatbeat;
+    GuestConnectionManager mGuestConnectionManager;
 
     std::atomic<bool> mIsBroadcasting = false;
     std::atomic<bool> mIsListeningGuest = false;
