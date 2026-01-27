@@ -49,10 +49,13 @@ void LanPeer::start_periodically_discover() {
     std::thread discovering_thread([this] {
         sf::UdpSocket socket;
         socket.setBlocking(false);
-        if (socket.bind(PORT) != sf::Socket::Status::Done) {
-            std::println("fail to UDP bind port {}",
-                         PORT);  // TODO: try to bind again later
-            mIsDiscovering.store(false);
+
+        // try to bind until success or no longer discovering
+        while (socket.bind(PORT) != sf::Socket::Status::Done &&
+               mIsDiscovering.load()) {
+            std::println("fail to UDP bind port {}, try again in 1s", PORT);
+            update_room_info();
+            sf::sleep(sf::seconds(1.f));
         }
 
         std::optional<sf::IpAddress> sender_ip = sf::IpAddress::Broadcast;
@@ -218,15 +221,18 @@ void LanPeer::start_heartbeat_to_host() {
                                          *mToHostTcpSocket.getRemoteAddress()};
         heartbeat_packet << heartbeat;
         while (mIsHeartbeating.load()) {
+            sf::sleep(sf::seconds(1.f));
             std::println("sending heartbeat packet to host: from {} to {}",
                          heartbeat.from.toString(), heartbeat.to.toString());
+
+            std::lock_guard guard(mLock);
             assert(mToHostTcpSocket.isBlocking());
             sf::Socket::Status status = mToHostTcpSocket.send(heartbeat_packet);
-            assert(
-                status ==
-                sf::Socket::Status::Done);  // TODO: host is lost,
-                                            // guest exit room, use enque update
-            sf::sleep(sf::seconds(1.f));
+            if (status != sf::Socket::Status::Done) {
+                std::println("host lost, exit room passively as guest");
+                enque_updateL(LanMessageUpdated::HostDismissRoom);
+                break;
+            }
         }
     });
     heartbeat_thread.detach();

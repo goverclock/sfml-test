@@ -16,7 +16,7 @@
 
 namespace lan {
 
-enum class LanMessageUpdated { RoomInfoList, GuestInRoom };
+enum class LanMessageUpdated { RoomInfoList, GuestInRoom, HostDismissRoom };
 
 // TODO: actually room info
 struct RoomInfo {

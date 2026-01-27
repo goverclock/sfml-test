@@ -38,6 +38,11 @@ void LocalStatus::update() {
                 }
                 break;
             }
+            case lan::LanMessageUpdated::HostDismissRoom: {
+                std::println("host dismissed room, returning to lobby");
+                guest_exit_room();
+                break;
+            }
             default:
                 UNREACHABLE();
                 break;
